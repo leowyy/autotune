@@ -11,6 +11,7 @@ class RandomOptimiser():
         self.domain = Design_space(space = domain, constraints=None)
         self.X = X_init
         self.Y = Y_init
+        self.initialisation_flag = True
 
     def run_optimization(self, max_iter = None, max_time = np.inf, verbosity=False):
             
@@ -44,7 +45,8 @@ class RandomOptimiser():
             X_new = self.draw_random_sample()
             Y_new = np.asscalar(self.f(X_new))
 
-            if self.X == None:
+            if self.initialisation_flag:
+                self.initialisation_flag = False
                 self.X = X_new
                 self.Y = Y_new
 
@@ -74,7 +76,7 @@ class RandomOptimiser():
         Computes the optimum and its value.
         """
         self.Y_best = best_value(self.Y)
-        self.x_opt = self.X[np.argmin(self.Y),:]
+        self.x_opt = self.X[np.argmin(self.Y), :]
         self.fx_opt = min(self.Y)
 
 
