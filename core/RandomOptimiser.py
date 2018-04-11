@@ -1,20 +1,17 @@
 import time
 import numpy as np
-import GPyOpt
-from GPyOpt.util.general import best_value
-from GPyOpt.experiment_design import initial_design
-from GPyOpt.core.task.space import Design_space
+from utils import best_value
 
-class RandomOptimiser():
-    def __init__(self, f, domain, X_init = None, Y_init = None):
-        self.f = f
-        self.domain = Design_space(space = domain, constraints=None)
-        self.X = X_init
+class RandomOptimiser(object):
+    def __init__(self, problem, arms_init = [], Y_init = []):
+        self.problem = problem      # problem provides generate_random_arm and eval_arm(x)
+        self.arms = arms_init
         self.Y = Y_init
-        self.initialisation_flag = True
 
-    def run_optimization(self, max_iter = None, max_time = np.inf, verbosity=False):
-            
+    def run_optimization(self, n_units, max_iter = None, max_time = np.inf, verbosity=False):
+
+        print("---- Running random optimisation ----")
+
         # --- Setting up stop conditions
         if  (max_iter is None) and (max_time is None):
             self.max_iter = 0
@@ -42,17 +39,16 @@ class RandomOptimiser():
                 break
 
             # Draw random sample
-            X_new = self.draw_random_sample()
-            Y_new = np.asscalar(self.f(X_new))
+            arm = self.problem.generate_random_arm()
 
-            if self.initialisation_flag:
-                self.initialisation_flag = False
-                self.X = X_new
-                self.Y = Y_new
+            arm['n_units'] = n_units # Fix this
 
-            else:
-                self.X = np.vstack((self.X, X_new))
-                self.Y = np.vstack((self.Y, Y_new))
+            # Evaluate arm on problem
+            Y_new = self.problem.eval_arm(arm)
+
+            # Update history
+            self.arms.append(arm)
+            self.Y.append(Y_new)
 
             if Y_new < global_best:
                 global_best = Y_new
@@ -68,16 +64,14 @@ class RandomOptimiser():
 
         self._compute_results()
 
-    def draw_random_sample(self, n_samples = 1):
-        return initial_design('random', self.domain, n_samples)
-
     def _compute_results(self):
         """
         Computes the optimum and its value.
         """
         self.Y_best = best_value(self.Y)
-        self.x_opt = self.X[np.argmin(self.Y), :]
         self.fx_opt = min(self.Y)
+        self.arm_opt = self.arms[ self.Y.index(self.fx_opt) ]
+
 
 
 

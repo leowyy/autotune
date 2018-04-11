@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import norm
 import GPy
 
-class BayesOptimiser():
+class BayesOptimiser(object):
     def __init__(self, model, objective, X_init, Y_init):
         self.model = model
         self.objective = objective

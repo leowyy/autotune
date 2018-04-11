@@ -1,9 +1,11 @@
 #!/usr/bin/env python2.7
+# From Hyperband experiments, L. Li 2016
 import numpy
 import random
 import copy
+
 class Param(object):
-  def __init__(self, name, min_val, max_val, init_val=None, distrib = 'uniform',scale='log',logbase = numpy.e, interval = None):
+  def __init__(self, name, min_val, max_val, init_val=None, distrib='uniform',scale='log',logbase = numpy.e, interval = None):
     self.name = name
     self.init_val = init_val
     self.min_val = min_val
@@ -13,6 +15,7 @@ class Param(object):
     self.param_type = 'continuous'
     self.distrib = distrib
     self.interval = interval
+
   def __repr__(self):
     return "%s(%f,%f,%s)" % ( self.name,self.min_val,self.max_val,self.scale)
 
@@ -45,6 +48,7 @@ class Param(object):
       if self.interval:
         val=(numpy.floor(val / self.interval) * self.interval).astype(int)
     return val
+
   def get_min(self):
     return self.min_val
   def get_max(self):

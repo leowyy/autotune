@@ -1,32 +1,34 @@
-import pprint
-import numpy as np
-
-from math import ceil
+from __future__ import division
 import os
-import shutil
+import numpy as np
 import torch
-import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 from torch.autograd import Variable
+import torch.backends.cudnn as cudnn
 
 import torchvision
 import torchvision.transforms as transforms
 
+from problem_def import Problem
+from params import Param
+from utils import progress_bar
 from ..sandpit.models.cudaconvnet import *
-from ..sandpit.utils import progress_bar
 
-class CIFAR10_problem(object):
-    def __init__(self, dirname, data_dir):
+class CIFAR10_problem(Problem):
+    def __init__(self, data_dir, dirname):
         self.dirname = dirname
         if not os.path.exists(dirname):
             os.makedirs(dirname)
         self.data_dir = data_dir
         self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-        self.trainloader, self.testloader = self._initialise_data()
 
-        self.f = lambda x: self._initialise_objective_function(x)
+        self.trainloader, self.testloader = self._initialise_data()
+        self.eval_arm = lambda x: self._initialise_objective_function(x)
         self.domain = self._initialise_domain()
+        self.hps = ['learning_rate', 'scale', 'power', 'lr_step']
+
+        self.use_cuda = torch.cuda.is_available()
+        print("Using GPUs? :", self.use_cuda)
 
     def _initialise_data(self):
         # TODO: confirm if the following data preprocessing is necessary
@@ -54,20 +56,19 @@ class CIFAR10_problem(object):
 
         return trainloader, testloader
 
-    def _initialise_objective_function(self, x):
-        x = np.atleast_2d(x)
-        print(x)
+    def _initialise_objective_function(self, arm):
+        print(arm)
 
         # Tunable hyperparameters
-        n_units = int(x[0,0])
-        base_lr = np.exp(x[0,1])
-        lr_step = int(x[0,2])
-        scale = np.exp(x[0,3])
-        power = x[0,4]
+        n_units = arm['n_units']
+        base_lr = arm['learning_rate']
+        lr_step = arm['lr_step']
+        scale   = arm['scale']
+        power   = arm['power']
 
         # Default hyperparameters
         n_batches = n_units * 100 # each unit of resource = 100 mini batches
-        max_epochs = n_batches//500 + 1
+        max_epochs = int(n_batches/500) + 1
         l2_flag = False
         gamma = 0.1
         if lr_step > max_epochs or lr_step == 0:
@@ -76,6 +77,11 @@ class CIFAR10_problem(object):
             step_size = int(max_epochs / lr_step)
 
         model = CudaConvNet(scale, power)
+        if self.use_cuda:
+            model.cuda()
+            model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
+            cudnn.benchmark = True
+
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.004)
 
@@ -98,6 +104,8 @@ class CIFAR10_problem(object):
             adjust_learning_rate(optimizer, epoch)
 
             for batch_idx, (inputs, targets) in enumerate(self.trainloader):
+                if self.use_cuda:
+                    inputs, targets = inputs.cuda(), targets.cuda()
                 if batch_idx >= max_batches: break
                 optimizer.zero_grad()
                 inputs, targets = Variable(inputs), Variable(targets)
@@ -132,6 +140,8 @@ class CIFAR10_problem(object):
             correct = 0
             total = 0
             for batch_idx, (inputs, targets) in enumerate(self.testloader):
+                if self.use_cuda:
+                    inputs, targets = inputs.cuda(), targets.cuda()
                 inputs, targets = Variable(inputs, volatile=True), Variable(targets)
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
@@ -145,7 +155,7 @@ class CIFAR10_problem(object):
                              % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
 
             # Save checkpoint.
-            test_acc = 100. * correct / total
+            test_acc = correct / total
             return test_acc
 
         best_acc = 0
@@ -159,23 +169,24 @@ class CIFAR10_problem(object):
             if test_acc > best_acc:
                 print('Saving..')
                 state = {
-                    'model': model,
+                    'model': model.module if self.use_cuda else model,
                     'test_acc': test_acc,
                     'epoch': epoch,
                 }
                 torch.save(state, filename)
                 best_acc = test_acc
 
-        return np.array(1 - test_acc/100.0)
+        return 1-test_acc
 
     def _initialise_domain(self):
-        domain = [{'name': 'n_units', 'type': 'continuous', 'domain': (1, 300)},
-                  {'name': 'lr_log', 'type': 'continuous', 'domain': (np.log(5e-15), np.log(5))},
-                  {'name': 'lr_step', 'type': 'continuous', 'domain': (0, 3)},
-                  {'name': 'scale_log', 'type': 'continuous', 'domain': (np.log(5e-6), np.log(5))},
-                  {'name': 'power', 'type': 'continuous', 'domain': (0.01, 3)}]
-        return domain
+        params = {}
+        params['learning_rate'] = Param('learning_rate', np.log(5e-5), np.log(5), distrib='uniform',scale='log')
+        params['weight_cost1'] = Param('weight_cost1', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
+        params['weight_cost2'] = Param('weight_cost2', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
+        params['weight_cost3'] = Param('weight_cost3', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
+        params['weight_cost4'] = Param('weight_cost4', np.log(5e-3), np.log(500), distrib='uniform', scale='log')
+        params['scale'] = Param('scale', np.log(5e-6), np.log(5), distrib='uniform', scale='log')
+        params['power'] = Param('power', 0.01, 3, distrib='uniform', scale='linear')
+        params['lr_step'] = Param('lr_step', 1, 5, distrib='uniform', scale='linear', interval=1)
 
-    def print_domain(self):
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(self.domain)
+        return params
