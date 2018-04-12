@@ -180,7 +180,7 @@ class CIFAR10_problem(Problem):
 
     def _initialise_domain(self):
         params = {}
-        params['learning_rate'] = Param('learning_rate', np.log(5e-5), np.log(5), distrib='uniform',scale='log')
+        params['learning_rate'] = Param('learning_rate', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
         params['weight_cost1'] = Param('weight_cost1', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
         params['weight_cost2'] = Param('weight_cost2', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
         params['weight_cost3'] = Param('weight_cost3', np.log(5e-5), np.log(5), distrib='uniform', scale='log')

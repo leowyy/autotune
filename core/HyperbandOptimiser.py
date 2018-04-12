@@ -4,11 +4,11 @@ import numpy as np
 from RandomOptimiser import RandomOptimiser
 
 class HyperbandOptimiser(RandomOptimiser):
-    def __init__(self, problem, arms_init = [], Y_init = []):
-        super(HyperbandOptimiser, self).__init__(problem, arms_init, Y_init)
+    def __init__(self, arms_init=[], Y_init=[]):
+        super(HyperbandOptimiser, self).__init__(arms_init, Y_init)
         # problem provides generate_random_arm and eval_arm(x)
 
-    def run_optimization(self, max_iter = None, eta = 3, verbosity=False):
+    def run_optimization(self, problem, n_units=None, max_iter=None, eta=3, verbosity=False):
 
         print("---- Running hyperband optimisation ----")
 
@@ -25,11 +25,11 @@ class HyperbandOptimiser(RandomOptimiser):
 
         #### Begin Finite Horizon Hyperband outlerloop. Repeat indefinetely.
         for s in reversed(range(s_max+1)):
-            n = int(ceil(int(B/max_iter/(s+1))*eta**s)) # initial number of configurations
-            r = max_iter*eta**(-s) # initial number of iterations to run configurations for
+            n = int(ceil(int(B/max_iter/(s+1))*eta**s))  # initial number of configurations
+            r = max_iter*eta**(-s)  # initial number of iterations to run configurations for
 
             #### Begin Finite Horizon Successive Halving with (n,r)
-            arms = [ self.problem.generate_random_arm() for i in range(n) ]
+            arms = [ problem.generate_random_arm() for i in range(n) ]
             for i in range(s+1):
                 # Run each of the n_i configs for r_i iterations and keep best n_i/eta
                 n_i = n*eta**(-i)
@@ -39,7 +39,7 @@ class HyperbandOptimiser(RandomOptimiser):
                 for arm in arms:
                     # Assign r_i units of resource to arm
                     arm['n_units'] = r_i
-                    loss = self.problem.eval_arm(arm)
+                    loss = problem.eval_arm(arm)
                     val_losses.append(loss)
 
                 # Track stats

@@ -3,17 +3,17 @@ import numpy as np
 from utils import best_value
 
 class RandomOptimiser(object):
-    def __init__(self, problem, arms_init = [], Y_init = []):
-        self.problem = problem      # problem provides generate_random_arm and eval_arm(x)
+    def __init__(self, arms_init=[], Y_init=[]):
         self.arms = arms_init
         self.Y = Y_init
 
-    def run_optimization(self, n_units, max_iter = None, max_time = np.inf, verbosity=False):
+    def run_optimization(self, problem, n_units, max_iter=None, max_time=np.inf, verbosity=False):
+        # problem provides generate_random_arm and eval_arm(x)
 
         print("---- Running random optimisation ----")
 
         # --- Setting up stop conditions
-        if  (max_iter is None) and (max_time is None):
+        if (max_iter is None) and (max_time is None):
             self.max_iter = 0
             self.max_time = np.inf
         elif (max_iter is None) and (max_time is not None):
@@ -34,17 +34,17 @@ class RandomOptimiser(object):
         global_best = np.inf
 
         while (self.max_time > self.cum_time):
-            if self.num_iterations > self.max_iter:
+            if self.num_iterations >= self.max_iter:
                 print("Exceeded maximum number of iterations")
                 break
 
             # Draw random sample
-            arm = self.problem.generate_random_arm()
+            arm = problem.generate_random_arm()
 
             arm['n_units'] = n_units # Fix this
 
             # Evaluate arm on problem
-            Y_new = self.problem.eval_arm(arm)
+            Y_new = problem.eval_arm(arm)
 
             # Update history
             self.arms.append(arm)
