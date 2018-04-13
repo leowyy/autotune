@@ -21,10 +21,11 @@ class HyperbandOptimiser(RandomOptimiser):
 
         logeta = lambda x: log(x)/log(eta)
         s_max = int(logeta(max_iter))  # number of unique executions of Successive Halving (minus one)
+        s_min = 2  # skip the rest of the brackets after s_min
         B = (s_max+1)*max_iter  # total number of iterations (without reuse) per execution of Succesive Halving (n,r)
 
         #### Begin Finite Horizon Hyperband outlerloop. Repeat indefinetely.
-        for s in reversed(range(s_max+1)):
+        for s in reversed(range(s_min, s_max+1)):
             n = int(ceil(int(B/max_iter/(s+1))*eta**s))  # initial number of configurations
             r = max_iter*eta**(-s)  # initial number of iterations to run configurations for
 

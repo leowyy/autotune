@@ -25,7 +25,7 @@ class CIFAR10_problem(Problem):
         self.trainloader, self.testloader = self._initialise_data()
         self.eval_arm = lambda x: self._initialise_objective_function(x)
         self.domain = self._initialise_domain()
-        self.hps = ['learning_rate', 'scale', 'power', 'lr_step']
+        self.hps = ['learning_rate', 'scale', 'power', 'lr_step', 'weight_1', 'weight_2', 'weight_3', 'weight_4']
 
         self.use_cuda = torch.cuda.is_available()
         print("Using GPUs? :", self.use_cuda)
@@ -66,16 +66,24 @@ class CIFAR10_problem(Problem):
         scale   = arm['scale']
         power   = arm['power']
 
+        if 'weight_1' in arm:
+            l2_flag = True
+            weight_costs = [arm['weight_1'], arm['weight_2'], arm['weight_3'], arm['weight_4']]
+        else:
+            l2_flag = False
+            weight_costs = [0, 0, 0, 0]
+
         # Default hyperparameters
         n_batches = n_units * 100 # each unit of resource = 100 mini batches
         max_epochs = int(n_batches/500) + 1
-        l2_flag = False
         gamma = 0.1
+
         if lr_step > max_epochs or lr_step == 0:
             step_size = max_epochs
         else:
             step_size = int(max_epochs / lr_step)
 
+        # Complete rest of the set-up
         model = CudaConvNet(scale, power)
         if self.use_cuda:
             model.cuda()
@@ -83,10 +91,11 @@ class CIFAR10_problem(Problem):
             cudnn.benchmark = True
 
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.004)
 
-        def l2_penalty(var):
-            return torch.sqrt(torch.pow(var, 2).sum())
+        if l2_flag:
+            optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.0)
+        else:
+            optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.004)
 
         def adjust_learning_rate(optimizer, epoch):
             """Sets the learning rate to the initial LR decayed by gamma every 'step_size' epochs"""
@@ -95,7 +104,7 @@ class CIFAR10_problem(Problem):
                 param_group['lr'] = lr
 
         # Training
-        def train(epoch, max_batches = 500):
+        def train(epoch, max_batches=500, disp_interval=10):
             print('\nEpoch: %d' % epoch)
             model.train()
             train_loss = 0
@@ -103,23 +112,27 @@ class CIFAR10_problem(Problem):
             total = 0
             adjust_learning_rate(optimizer, epoch)
 
-            for batch_idx, (inputs, targets) in enumerate(self.trainloader):
+            for batch_idx, (inputs, targets) in enumerate(self.trainloader, start=1):
                 if self.use_cuda:
                     inputs, targets = inputs.cuda(), targets.cuda()
-                if batch_idx >= max_batches: break
+                if batch_idx >= max_batches:
+                    break
                 optimizer.zero_grad()
                 inputs, targets = Variable(inputs), Variable(targets)
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
 
-                # if l2_flag:
-                #     l2_reg = Variable(torch.FloatTensor(1), requires_grad=True)
-                #     # Add l2 penalty during training
-                #     for i, W in enumerate(model.parameters()):
-                #         q, r = divmod(i, 2)
-                #         if r == 0 and q <= 3:
-                #             l2_reg = l2_reg + float(weight_costs[q]) * torch.pow(W, 2).sum()
-                #     loss = loss + l2_reg
+                if l2_flag:
+                    if self.use_cuda:
+                        l2_reg = Variable(torch.cuda.FloatTensor(1), requires_grad=True)
+                    else:
+                        l2_reg = Variable(torch.FloatTensor(1), requires_grad=True)
+                    # Add l2 penalty during training
+                    for i, W in enumerate(model.parameters()):
+                        q, r = divmod(i, 2)
+                        if r == 0 and q <= 3:
+                            l2_reg = l2_reg + float(weight_costs[q]) * torch.pow(W, 2).sum()
+                    loss = loss + l2_reg
 
                 loss.backward()
                 optimizer.step()
@@ -129,17 +142,17 @@ class CIFAR10_problem(Problem):
                 total += targets.size(0)
                 correct += predicted.eq(targets.data).cpu().sum()
 
-                progress_bar(batch_idx, len(self.trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                             % (train_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+                if batch_idx % disp_interval == 0:
+                    progress_bar(batch_idx, len(self.trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                             % (train_loss / batch_idx, 100. * correct / total, correct, total))
             return train_loss
 
-        def test(epoch):
-            global best_acc
+        def test(disp_interval=100):
             model.eval()
             test_loss = 0
             correct = 0
             total = 0
-            for batch_idx, (inputs, targets) in enumerate(self.testloader):
+            for batch_idx, (inputs, targets) in enumerate(self.testloader, start=1):
                 if self.use_cuda:
                     inputs, targets = inputs.cuda(), targets.cuda()
                 inputs, targets = Variable(inputs, volatile=True), Variable(targets)
@@ -151,40 +164,38 @@ class CIFAR10_problem(Problem):
                 total += targets.size(0)
                 correct += predicted.eq(targets.data).cpu().sum()
 
-                progress_bar(batch_idx, len(self.testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                             % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+                if batch_idx % disp_interval == 0:
+                    progress_bar(batch_idx, len(self.testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                            % (test_loss / batch_idx, 100. * correct / total, correct, total))
 
             # Save checkpoint.
             test_acc = correct / total
             return test_acc
 
-        best_acc = 0
         val_acc = 0
         filename = self.dirname + 'checkpoint.pth.tar'
         for epoch in range(max_epochs):
             train(epoch, min(n_batches, 500))
             n_batches = n_batches - 500
-            test_acc = test(epoch)
 
-            if test_acc > best_acc:
-                print('Saving..')
-                state = {
-                    'model': model.module if self.use_cuda else model,
-                    'test_acc': test_acc,
-                    'epoch': epoch,
-                }
-                torch.save(state, filename)
-                best_acc = test_acc
+        test_acc = test()
+
+        # print('Saving..')
+        # state = {
+        #     'model': model.module if self.use_cuda else model,
+        #     'test_acc': test_acc
+        # }
+        # torch.save(state, filename)
 
         return 1-test_acc
 
     def _initialise_domain(self):
         params = {}
         params['learning_rate'] = Param('learning_rate', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
-        params['weight_cost1'] = Param('weight_cost1', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
-        params['weight_cost2'] = Param('weight_cost2', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
-        params['weight_cost3'] = Param('weight_cost3', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
-        params['weight_cost4'] = Param('weight_cost4', np.log(5e-3), np.log(500), distrib='uniform', scale='log')
+        params['weight_1'] = Param('weight_1', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
+        params['weight_2'] = Param('weight_2', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
+        params['weight_3'] = Param('weight_3', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
+        params['weight_4'] = Param('weight_4', np.log(5e-3), np.log(500), distrib='uniform', scale='log')
         params['scale'] = Param('scale', np.log(5e-6), np.log(5), distrib='uniform', scale='log')
         params['power'] = Param('power', 0.01, 3, distrib='uniform', scale='linear')
         params['lr_step'] = Param('lr_step', 1, 5, distrib='uniform', scale='linear', interval=1)
