@@ -21,7 +21,10 @@ class HyperbandOptimiser(RandomOptimiser):
 
         logeta = lambda x: log(x)/log(eta)
         s_max = int(logeta(max_iter))  # number of unique executions of Successive Halving (minus one)
-        s_min = 2  # skip the rest of the brackets after s_min
+        if s_max >= 2:
+            s_min = 2  # skip the rest of the brackets after s_min
+        else:
+            s_min = 0
         B = (s_max+1)*max_iter  # total number of iterations (without reuse) per execution of Succesive Halving (n,r)
 
         #### Begin Finite Horizon Hyperband outlerloop. Repeat indefinetely.
@@ -66,4 +69,5 @@ class HyperbandOptimiser(RandomOptimiser):
                 arms = [ arms[i] for i in np.argsort(val_losses)[0:int( n_i/eta )] ]
             #### End Finite Horizon Successive Halving with (n,r)
 
+        print(s_max+1)
         self._compute_results()

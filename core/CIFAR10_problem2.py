@@ -94,7 +94,7 @@ class CIFAR10_problem2(Problem):
         #         param_group['lr'] = lr
 
         # Training
-        def train(epoch, max_batches=500, disp_interval=100):
+        def train(epoch, max_batches=500, disp_interval=10):
             print('\nEpoch: %d' % epoch)
             model.train()
             train_loss = 0

@@ -16,10 +16,10 @@ args = parser.parse_args()
 problem = CIFAR10_problem2(args.input_dir, args.output_dir)
 problem.print_domain()
 
-n_resources = 81  # units of resource assigned to each random optimisation iteration
+n_resources = 1  # units of resource assigned to each random optimisation iteration
 
 hyperband_opt = HyperbandOptimiser()
-hyperband_opt.run_optimization(problem, max_iter=81, verbosity=True)
+hyperband_opt.run_optimization(problem, max_iter=9, verbosity=True)
 
 time_budget = hyperband_opt.checkpoints[-1]
 print("Time budget = {}".format(time_budget))
