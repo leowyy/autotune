@@ -13,7 +13,6 @@ class CudaConvNet(nn.Module):
         self.lrn2 = LRN(3, alpha, beta)
 
         self.fc1 = nn.Linear(64 * 4 * 4, 10)
-        self.fc2 = nn.Linear(10, 10)
 
     def forward(self, x):
         out = self.conv1(x)
@@ -30,11 +29,10 @@ class CudaConvNet(nn.Module):
         out = out.view(out.size(0), -1)
 
         out = self.fc1(out)
-        out = self.fc2(out)
         return out
 
-## Helper class for local response normalisation
-## Is this efficient?
+# Helper class for local response normalisation
+# Is this efficient?
 class LRN(nn.Module):
     def __init__(self, local_size=1, alpha=1.0, beta=0.75, ACROSS_CHANNELS=True):
         super(LRN, self).__init__()

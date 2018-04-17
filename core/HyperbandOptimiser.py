@@ -39,7 +39,7 @@ class HyperbandOptimiser(RandomOptimiser):
 
                 for arm in arms:
                     # Assign r_i units of resource to arm
-                    arm['n_units'] = r_i
+                    arm['n_resources'] = r_i
                     loss = problem.eval_arm(arm)
                     val_losses.append(loss)
 

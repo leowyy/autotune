@@ -7,7 +7,7 @@ class RandomOptimiser(object):
         self.arms = arms_init
         self.Y = Y_init
 
-    def run_optimization(self, problem, n_units, max_iter=None, max_time=np.inf, verbosity=False):
+    def run_optimization(self, problem, n_resources, max_iter=None, max_time=np.inf, verbosity=False):
         # problem provides generate_random_arm and eval_arm(x)
 
         print("---- Running random optimisation ----")
@@ -40,8 +40,7 @@ class RandomOptimiser(object):
 
             # Draw random sample
             arm = problem.generate_random_arm()
-
-            arm['n_units'] = n_units # Fix this
+            arm['n_resources'] = n_resources  # Fix this
 
             # Evaluate arm on problem
             Y_new = problem.eval_arm(arm)

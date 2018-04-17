@@ -4,7 +4,7 @@ import abc
 class Problem(object):
     __metaclass__ = abc.ABCMeta
 
-    def generate_random_arm(self, hps = None):
+    def generate_random_arm(self, hps=None):
         if not hps:
             hps = self.hps
         arm = {}
