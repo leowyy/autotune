@@ -4,11 +4,11 @@ import numpy as np
 from RandomOptimiser import RandomOptimiser
 
 class HyperbandOptimiser(RandomOptimiser):
-    def __init__(self, arms_init=[], Y_init=[]):
-        super(HyperbandOptimiser, self).__init__(arms_init, Y_init)
-        # problem provides generate_random_arm and eval_arm(x)
+    def __init__(self, arms_init=[], val_loss_init=[], Y_init=[]):
+        super(HyperbandOptimiser, self).__init__(arms_init, val_loss_init, Y_init)
 
     def run_optimization(self, problem, n_units=None, max_iter=None, eta=3, verbosity=False):
+        # problem provides generate_random_arm and eval_arm(x)
 
         print("---- Running hyperband optimisation ----")
 
