@@ -5,10 +5,10 @@ import torch
 import torch.optim as optim
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
-
 import torchvision
 import torchvision.transforms as transforms
 
+from CIFAR10_data_loader import get_train_val_set, get_test_set
 from problem_def import Problem
 from params import Param
 from utils import progress_bar
@@ -22,7 +22,7 @@ class CIFAR10_problem2(Problem):
         self.data_dir = data_dir
         self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-        self.trainset, self.testset = self._initialise_data()
+        self._initialise_data()
         self.eval_arm = lambda x: self._initialise_objective_function(x)
         self.domain = self._initialise_domain()
         self.hps = ['learning_rate', 'n_units_1', 'n_units_2', 'n_units_3',
@@ -32,27 +32,21 @@ class CIFAR10_problem2(Problem):
         print("Using GPUs? :", self.use_cuda)
 
     def _initialise_data(self):
-        # TODO: confirm if the following data preprocessing is necessary
-        # TODO: train, val, test split
-
+        # 40k train, 10k val, 10k test
         print('==> Preparing data..')
-        transform_train = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-        ])
+        train_data, val_data, train_sampler, val_sampler = get_train_val_set(data_dir=self.data_dir,
+                                                                             augment=True,
+                                                                             random_seed=0,
+                                                                             valid_size=0.2)
+        test_data = get_test_set(data_dir=self.data_dir)
 
-        transform_test = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-        ])
+        self.val_loader = torch.utils.data.DataLoader(val_data, batch_size=100, sampler=val_sampler,
+                                                      num_workers=2, pin_memory=False)
+        self.test_loader = torch.utils.data.DataLoader(test_data, batch_size=100, shuffle=True,
+                                                       num_workers=2, pin_memory=False)
 
-        trainset = torchvision.datasets.CIFAR10(root=self.data_dir, train=True, download=True,
-                                                transform=transform_train)
-        testset = torchvision.datasets.CIFAR10(root=self.data_dir, train=False, download=True,
-                                               transform=transform_test)
-        return trainset, testset
+        self.train_data = train_data
+        self.train_sampler = train_sampler
 
     def _initialise_objective_function(self, arm):
         print(arm)
@@ -70,12 +64,14 @@ class CIFAR10_problem2(Problem):
         weight_decay = arm['weight_decay']
         momentum = arm['momentum']
 
-        trainloader = torch.utils.data.DataLoader(self.trainset, batch_size=batch_size, shuffle=True, num_workers=2)
-        testloader = torch.utils.data.DataLoader(self.testset, batch_size=100, shuffle=False, num_workers=2)
+        # Initialise train_loader based on batch size
+        train_loader = torch.utils.data.DataLoader(self.train_data, batch_size=batch_size,
+                                                   sampler=self.train_sampler,
+                                                   num_workers=2, pin_memory=False)
 
         # Derived hyperparameters
         n_batches = int(n_resources * 10000 / batch_size)  # each unit of resource = 10,000 examples
-        batches_per_epoch = int(50000 / batch_size) + 1
+        batches_per_epoch = len(train_loader)
         max_epochs = int(n_batches / batches_per_epoch) + 1
 
         if lr_step > max_epochs or lr_step == 0:
@@ -100,7 +96,7 @@ class CIFAR10_problem2(Problem):
                 param_group['lr'] = lr
 
         # Training
-        def train(epoch, max_batches=500, disp_interval=10):
+        def train(epoch, max_batches, disp_interval=10):
             print('\nEpoch: %d' % epoch)
             model.train()
             train_loss = 0
@@ -108,7 +104,7 @@ class CIFAR10_problem2(Problem):
             total = 0
             adjust_learning_rate(optimizer, epoch)
 
-            for batch_idx, (inputs, targets) in enumerate(trainloader, start=1):
+            for batch_idx, (inputs, targets) in enumerate(train_loader, start=1):
                 if self.use_cuda:
                     inputs, targets = inputs.cuda(), targets.cuda()
                 if batch_idx >= max_batches:
@@ -125,17 +121,17 @@ class CIFAR10_problem2(Problem):
                 total += targets.size(0)
                 correct += predicted.eq(targets.data).cpu().sum()
 
-                if batch_idx % disp_interval == 0:
-                    progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                if batch_idx % disp_interval == 0 or batch_idx == len(train_loader):
+                    progress_bar(batch_idx, len(train_loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                              % (train_loss / batch_idx, 100. * correct / total, correct, total))
             return train_loss
 
-        def test(disp_interval=100):
+        def test(loader, disp_interval=100):
             model.eval()
             test_loss = 0
             correct = 0
             total = 0
-            for batch_idx, (inputs, targets) in enumerate(testloader, start=1):
+            for batch_idx, (inputs, targets) in enumerate(loader, start=1):
                 if self.use_cuda:
                     inputs, targets = inputs.cuda(), targets.cuda()
                 inputs, targets = Variable(inputs, volatile=True), Variable(targets)
@@ -147,8 +143,8 @@ class CIFAR10_problem2(Problem):
                 total += targets.size(0)
                 correct += predicted.eq(targets.data).cpu().sum()
 
-                if batch_idx % disp_interval == 0:
-                    progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                if batch_idx % disp_interval == 0 or batch_idx == len(loader):
+                    progress_bar(batch_idx, len(loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                             % (test_loss / batch_idx, 100. * correct / total, correct, total))
 
             return correct / total
@@ -158,7 +154,10 @@ class CIFAR10_problem2(Problem):
             train(epoch, min(n_batches, batches_per_epoch))
             n_batches = n_batches - batches_per_epoch  # Decrement n_batches remaining
 
-        return 1-test()
+        # Evaluate trained net on val and test set
+        val_acc = test(self.val_loader)
+        test_acc = test(self.test_loader)
+        return 1-val_acc, 1-test_acc
 
     def _initialise_domain(self):
         params = {}

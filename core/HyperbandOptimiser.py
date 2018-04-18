@@ -17,7 +17,6 @@ class HyperbandOptimiser(RandomOptimiser):
         self.cum_time  = 0
         self.num_iterations = 0
         self.checkpoints = []
-        global_best = np.inf
 
         logeta = lambda x: log(x)/log(eta)
         s_max = int(logeta(max_iter))  # number of unique executions of Successive Halving (minus one)
@@ -39,32 +38,33 @@ class HyperbandOptimiser(RandomOptimiser):
                 n_i = n*eta**(-i)
                 r_i = r*eta**(i)
                 val_losses = []
+                test_losses = []
 
                 for arm in arms:
                     # Assign r_i units of resource to arm
                     arm['n_resources'] = r_i
-                    loss = problem.eval_arm(arm)
-                    val_losses.append(loss)
+                    val_loss, test_loss = problem.eval_arm(arm)
+                    val_losses.append(val_loss)
+                    test_losses.append(test_loss)
 
                 # Track stats
-                Y_new = min(val_losses)
-                min_index = val_losses.index(Y_new)
+                min_val = min(val_losses)
+                min_index = val_losses.index(min_val)
                 best_arm = arms[min_index]
+                Y_new = test_losses[min_index]
 
                 # Update history
                 self.arms.append(best_arm)
+                self.val_loss.append(min_val)
                 self.Y.append(Y_new)
-
-                if Y_new < global_best:
-                    global_best = Y_new
 
                 # --- Update current evaluation time and function evaluations
                 self.cum_time = time.time() - self.time_zero
                 self.checkpoints.append(self.cum_time)
 
                 if verbosity:
-                    print("time elapsed: {:.2f}s, f_best: {:.5f}".format(
-                        self.cum_time, global_best))
+                    print("time elapsed: {:.2f}s, f_current: {:.5f}, f_best: {:.5f}".format(
+                        self.cum_time, Y_new, min(self.Y)))
 
                 arms = [ arms[i] for i in np.argsort(val_losses)[0:int( n_i/eta )] ]
             #### End Finite Horizon Successive Halving with (n,r)

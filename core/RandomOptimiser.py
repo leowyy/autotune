@@ -3,8 +3,9 @@ import numpy as np
 from utils import best_value
 
 class RandomOptimiser(object):
-    def __init__(self, arms_init=[], Y_init=[]):
+    def __init__(self, arms_init=[], val_loss_init=[], Y_init=[]):
         self.arms = arms_init
+        self.val_loss = val_loss_init
         self.Y = Y_init
 
     def run_optimization(self, problem, n_resources, max_iter=None, max_time=np.inf, verbosity=False):
@@ -31,7 +32,6 @@ class RandomOptimiser(object):
         self.cum_time  = 0
         self.num_iterations = 0
         self.checkpoints = []
-        global_best = np.inf
 
         while (self.max_time > self.cum_time):
             if self.num_iterations >= self.max_iter:
@@ -43,14 +43,12 @@ class RandomOptimiser(object):
             arm['n_resources'] = n_resources  # Fix this
 
             # Evaluate arm on problem
-            Y_new = problem.eval_arm(arm)
+            val_loss, Y_new = problem.eval_arm(arm)
 
             # Update history
             self.arms.append(arm)
+            self.val_loss.append(val_loss)
             self.Y.append(Y_new)
-
-            if Y_new < global_best:
-                global_best = Y_new
 
             # --- Update current evaluation time and function evaluations
             self.cum_time = time.time() - self.time_zero
@@ -58,8 +56,8 @@ class RandomOptimiser(object):
             self.checkpoints.append(self.cum_time)
 
             if verbosity:
-                print("num iteration: {}, time elapsed: {:.2f}s, f_best: {:.5f}".format(
-                    self.num_iterations, self.cum_time, global_best))
+                print("num iteration: {}, time elapsed: {:.2f}s, f_current: {:.5f}, f_best: {:.5f}".format(
+                    self.num_iterations, self.cum_time, Y_new, min(self.Y)))
 
         self._compute_results()
 
