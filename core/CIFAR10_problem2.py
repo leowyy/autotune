@@ -25,7 +25,8 @@ class CIFAR10_problem2(Problem):
         self.trainset, self.testset = self._initialise_data()
         self.eval_arm = lambda x: self._initialise_objective_function(x)
         self.domain = self._initialise_domain()
-        self.hps = ['learning_rate', 'n_units_1', 'n_units_2', 'n_units_3', 'batch_size']
+        self.hps = ['learning_rate', 'n_units_1', 'n_units_2', 'n_units_3',
+                    'batch_size', 'lr_step', 'gamma', 'weight_decay', 'momentum']
 
         self.use_cuda = torch.cuda.is_available()
         print("Using GPUs? :", self.use_cuda)
@@ -64,11 +65,10 @@ class CIFAR10_problem2(Problem):
         n_units_3 = arm['n_units_3']
         batch_size = arm['batch_size']
 
-        # gamma = 0.1
-        # if lr_step > max_epochs or lr_step == 0:
-        #     step_size = max_epochs
-        # else:
-        #     step_size = int(max_epochs / lr_step)
+        lr_step = arm['lr_step']
+        gamma = arm['gamma']
+        weight_decay = arm['weight_decay']
+        momentum = arm['momentum']
 
         trainloader = torch.utils.data.DataLoader(self.trainset, batch_size=batch_size, shuffle=True, num_workers=2)
         testloader = torch.utils.data.DataLoader(self.testset, batch_size=100, shuffle=False, num_workers=2)
@@ -78,6 +78,11 @@ class CIFAR10_problem2(Problem):
         batches_per_epoch = int(50000 / batch_size) + 1
         max_epochs = int(n_batches / batches_per_epoch) + 1
 
+        if lr_step > max_epochs or lr_step == 0:
+            step_size = max_epochs
+        else:
+            step_size = int(max_epochs / lr_step)
+
         # Complete rest of the set-up
         model = CudaConvNet2(n_units_1, n_units_2, n_units_3)
         if self.use_cuda:
@@ -85,13 +90,14 @@ class CIFAR10_problem2(Problem):
             model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
             cudnn.benchmark = True
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.004)
+        # optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.004)
+        optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=momentum, weight_decay=weight_decay)
 
-        # def adjust_learning_rate(optimizer, epoch):
-        #     """Sets the learning rate to the initial LR decayed by gamma every 'step_size' epochs"""
-        #     lr = base_lr * (gamma ** (epoch // step_size))
-        #     for param_group in optimizer.param_groups:
-        #         param_group['lr'] = lr
+        def adjust_learning_rate(optimizer, epoch):
+            """Sets the learning rate to the initial LR decayed by gamma every 'step_size' epochs"""
+            lr = base_lr * (gamma ** (epoch // step_size))
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = lr
 
         # Training
         def train(epoch, max_batches=500, disp_interval=10):
@@ -100,7 +106,7 @@ class CIFAR10_problem2(Problem):
             train_loss = 0
             correct = 0
             total = 0
-            # adjust_learning_rate(optimizer, epoch)
+            adjust_learning_rate(optimizer, epoch)
 
             for batch_idx, (inputs, targets) in enumerate(trainloader, start=1):
                 if self.use_cuda:
@@ -161,4 +167,9 @@ class CIFAR10_problem2(Problem):
         params['n_units_2'] = Param('n_units_2', 4, 8, distrib='uniform', scale='log', logbase=2, interval=1)
         params['n_units_3'] = Param('n_units_3', 4, 8, distrib='uniform', scale='log', logbase=2, interval=1)
         params['batch_size'] = Param('batch_size', 32, 512, distrib='uniform', scale='linear', interval=1)
+        params['lr_step'] = Param('lr_step', 1, 5, distrib='uniform', scale='linear', interval=1)
+        params['gamma'] = Param('gamma', -3, -1, distrib='uniform', scale='log', logbase=10)
+        params['weight_decay'] = Param('weight_decay', -6, -1, distrib='uniform', scale='log', logbase=10)
+        params['momentum'] = Param('momentum', 0.3, 0.999, distrib='uniform', scale='linear')
+
         return params
