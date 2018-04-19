@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class CudaConvNet2(nn.Module):
     def __init__(self, n_units_1, n_units_2, n_units_3):
         super(CudaConvNet2, self).__init__()

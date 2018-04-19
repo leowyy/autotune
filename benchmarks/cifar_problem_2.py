@@ -1,20 +1,19 @@
 from __future__ import division
 import os
-import numpy as np
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
-import torchvision
-import torchvision.transforms as transforms
 
-from CIFAR10_data_loader import get_train_val_set, get_test_set
-from problem_def import Problem
-from params import Param
-from utils import progress_bar
-from ..sandpit.models.cudaconvnet2 import *
+from cifar_data_loader import get_train_val_set, get_test_set
+from ..core.problem_def import Problem
+from ..core.params import Param
+from ..util.progress_bar import progress_bar
+from ml_models.cudaconvnet2 import CudaConvNet2
 
-class CIFAR10_problem2(Problem):
+
+class CifarProblem2(Problem):
     def __init__(self, data_dir, dirname):
         self.dirname = dirname
         if not os.path.exists(dirname):
@@ -69,7 +68,7 @@ class CIFAR10_problem2(Problem):
                                                    sampler=self.train_sampler,
                                                    num_workers=2, pin_memory=False)
 
-        # Derived hyperparameters
+        # Compute derived hyperparameters
         n_batches = int(n_resources * 10000 / batch_size)  # each unit of resource = 10,000 examples
         batches_per_epoch = len(train_loader)
         max_epochs = int(n_batches / batches_per_epoch) + 1
@@ -86,7 +85,6 @@ class CIFAR10_problem2(Problem):
             model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
             cudnn.benchmark = True
         criterion = nn.CrossEntropyLoss()
-        # optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.004)
         optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=momentum, weight_decay=weight_decay)
 
         def adjust_learning_rate(optimizer, epoch):

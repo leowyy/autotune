@@ -1,6 +1,7 @@
 import time
 import numpy as np
-from utils import best_value
+from ..util.best_value import best_value
+
 
 class RandomOptimiser(object):
     def __init__(self, arms_init=[], val_loss_init=[], Y_init=[]):

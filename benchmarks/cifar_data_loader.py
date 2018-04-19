@@ -4,8 +4,6 @@ Easily extended to MNIST, CIFAR-100 and Imagenet.
 
 [1]: https://discuss.pytorch.org/t/feedback-on-pytorch-for-kaggle-competitions/2252/4
 """
-
-import torch
 import numpy as np
 
 from torchvision import datasets
@@ -14,10 +12,10 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 
 def get_train_val_set(data_dir,
-                    augment,
-                    random_seed,
-                    valid_size=0.2,
-                    shuffle=True):
+                      augment,
+                      random_seed,
+                      valid_size=0.2,
+                      shuffle=True):
     """
     Utility function for loading and returning train and valid
     multi-process iterators over the CIFAR-10 dataset. A sample
@@ -42,8 +40,10 @@ def get_train_val_set(data_dir,
 
     Returns
     -------
-    - train_loader: training set iterator.
-    - valid_loader: validation set iterator.
+    - train_data: training set
+    - val_data: validation set
+    - train_sampler
+    - val_sampler
     """
     error_msg = "[!] valid_size should be in the range [0, 1]."
     assert ((valid_size >= 0) and (valid_size <= 1)), error_msg
@@ -72,17 +72,17 @@ def get_train_val_set(data_dir,
         ])
 
     # load the dataset
-    train_dataset = datasets.CIFAR10(
+    train_data = datasets.CIFAR10(
         root=data_dir, train=True,
         download=True, transform=train_transform,
     )
 
-    valid_dataset = datasets.CIFAR10(
+    val_data = datasets.CIFAR10(
         root=data_dir, train=True,
         download=True, transform=valid_transform,
     )
 
-    num_train = len(train_dataset)
+    num_train = len(train_data)
     indices = list(range(num_train))
     split = int(np.floor(valid_size * num_train))
 
@@ -90,19 +90,11 @@ def get_train_val_set(data_dir,
         np.random.seed(random_seed)
         np.random.shuffle(indices)
 
-    train_idx, valid_idx = indices[split:], indices[:split]
+    train_idx, val_idx = indices[split:], indices[:split]
     train_sampler = SubsetRandomSampler(train_idx)
-    valid_sampler = SubsetRandomSampler(valid_idx)
+    val_sampler = SubsetRandomSampler(val_idx)
 
-    # train_loader = torch.utils.data.DataLoader(
-    #     train_dataset, batch_size=batch_size, sampler=train_sampler,
-    #     num_workers=num_workers, pin_memory=pin_memory,
-    # )
-    # valid_loader = torch.utils.data.DataLoader(
-    #     valid_dataset, batch_size=batch_size, sampler=valid_sampler,
-    #     num_workers=num_workers, pin_memory=pin_memory,
-    # )
-    return train_dataset, valid_dataset, train_sampler, valid_sampler
+    return train_data, val_data, train_sampler, val_sampler
 
 
 def get_test_set(data_dir):
@@ -123,7 +115,7 @@ def get_test_set(data_dir):
 
     Returns
     -------
-    - data_loader: test set iterator.
+    - test_data
     """
     normalize = transforms.Normalize(
         mean=[0.485, 0.456, 0.406],
@@ -136,14 +128,9 @@ def get_test_set(data_dir):
         normalize,
     ])
 
-    dataset = datasets.CIFAR10(
+    test_data = datasets.CIFAR10(
         root=data_dir, train=False,
         download=True, transform=transform,
     )
 
-    # data_loader = torch.utils.data.DataLoader(
-    #     dataset, batch_size=batch_size, shuffle=shuffle,
-    #     num_workers=num_workers, pin_memory=pin_memory,
-    # )
-
-    return dataset
+    return test_data

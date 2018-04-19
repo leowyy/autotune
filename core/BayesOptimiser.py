@@ -1,3 +1,7 @@
+"""
+Deprecated, kept as a reference for comparison with Bayesian methods
+"""
+
 import numpy as np
 from scipy.stats import norm
 import GPy

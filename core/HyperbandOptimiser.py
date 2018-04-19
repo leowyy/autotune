@@ -3,6 +3,7 @@ from math import log, ceil
 import numpy as np
 from RandomOptimiser import RandomOptimiser
 
+
 class HyperbandOptimiser(RandomOptimiser):
     def __init__(self, arms_init=[], val_loss_init=[], Y_init=[]):
         super(HyperbandOptimiser, self).__init__(arms_init, val_loss_init, Y_init)
@@ -69,5 +70,4 @@ class HyperbandOptimiser(RandomOptimiser):
                 arms = [ arms[i] for i in np.argsort(val_losses)[0:int( n_i/eta )] ]
             #### End Finite Horizon Successive Halving with (n,r)
 
-        print(s_max+1)
         self._compute_results()

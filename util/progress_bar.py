@@ -1,48 +1,12 @@
-import os
 import sys
 import time
 
-import torch
-import torch.nn as nn
-import torch.nn.init as init
-
-def best_value(Y,sign=1):
-    '''
-    Returns a vector whose components i are the minimum (default) or maximum of Y[:i]
-    '''
-    Y_best = list(Y)
-    global_val = Y[0]
-    for i in range(len(Y_best)):
-        if sign == 1:
-            global_val = min(Y[i], global_val)
-        else:
-            global_val = max(Y[i], global_val)
-        Y_best[i] = global_val
-    return Y_best
-
-
-#TODO: fix these functions
-def get_mean_and_std(dataset):
-    '''Compute the mean and std value of dataset.'''
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=2)
-    mean = torch.zeros(3)
-    std = torch.zeros(3)
-    print('==> Computing mean and std..')
-    for inputs, targets in dataloader:
-        for i in range(3):
-            mean[i] += inputs[:,i,:,:].mean()
-            std[i] += inputs[:,i,:,:].std()
-    mean.div_(len(dataset))
-    std.div_(len(dataset))
-    return mean, std
-
-#_, term_width = os.popen('stty size', 'r').read().split()
 term_width = 126
-term_width = int(term_width)
-
 TOTAL_BAR_LENGTH = 65.
 last_time = time.time()
 begin_time = last_time
+
+
 def progress_bar(current, total, msg=None):
     global last_time, begin_time
     if current == 0:
@@ -85,6 +49,7 @@ def progress_bar(current, total, msg=None):
     else:
         sys.stdout.write('\n')
     sys.stdout.flush()
+
 
 def format_time(seconds):
     days = int(seconds / 3600/24)

@@ -2,6 +2,7 @@ from __future__ import division
 import os
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
@@ -9,12 +10,14 @@ import torch.backends.cudnn as cudnn
 import torchvision
 import torchvision.transforms as transforms
 
-from problem_def import Problem
-from params import Param
-from utils import progress_bar
-from ..sandpit.models.cudaconvnet import *
+from ..core.problem_def import Problem
+from ..core.params import Param
+from ..util.progress_bar import progress_bar
+from ml_models.cudaconvnet import CudaConvNet
 
-class CIFAR10_problem(Problem):
+
+class CifarProblem1(Problem):
+
     def __init__(self, data_dir, dirname):
         self.dirname = dirname
         if not os.path.exists(dirname):

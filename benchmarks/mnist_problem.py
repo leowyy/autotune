@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
+
 class MNIST_problem():
     def __init__(self):
         self.X_train, self.X_test, self.y_train, self.y_test = self._initialise_data()
@@ -55,7 +56,7 @@ class MNIST_problem():
                     clf.partial_fit(X_batch, y_batch, classes=self.classes)
 
             score = clf.score(self.X_test, self.y_test)
-            fs[i] = 1 - score # classification error
+            fs[i] = 1 - score  # classification error
         return fs
 
     def _initialise_domain(self):
@@ -69,7 +70,3 @@ class MNIST_problem():
     def _next_batch(self, X, y, batch_size):
         for i in np.arange(0, X.shape[0], batch_size):
             yield (X[i:i + batch_size], y[i:i + batch_size])
-
-    def print_domain(self):
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(self.domain)
