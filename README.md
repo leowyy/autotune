@@ -3,7 +3,4 @@
 Tuning a convolutional net on CIFAR10, 9 hyperparams
 <img src="https://github.com/signapoop/autotune/blob/master/img/basic_cifar_comparison.png" width="500">
 
-Tuning a logistic model on MNIST, 4 hyperparams
-<img src="https://github.com/signapoop/autotune/blob/master/img/basic_mnist_comparison.png" width="500">
-
 __Stay tuned for more updates...__
