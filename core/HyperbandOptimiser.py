@@ -7,6 +7,7 @@ from RandomOptimiser import RandomOptimiser
 class HyperbandOptimiser(RandomOptimiser):
     def __init__(self, arms_init=[], val_loss_init=[], Y_init=[]):
         super(HyperbandOptimiser, self).__init__(arms_init, val_loss_init, Y_init)
+        self.name = "Hyperband"
 
     def run_optimization(self, problem, n_units=None, max_iter=None, eta=3, verbosity=False):
         # problem provides generate_random_arm and eval_arm(x)
@@ -15,7 +16,7 @@ class HyperbandOptimiser(RandomOptimiser):
 
         # --- Initialize iterations and running time
         self.time_zero = time.time()
-        self.cum_time  = 0
+        self.cum_time = 0
         self.num_iterations = 0
         self.checkpoints = []
 

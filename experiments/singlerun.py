@@ -3,7 +3,7 @@ import argparse
 from ..benchmarks.cifar_problem_2 import CifarProblem2
 
 # input_dir = '/Users/signapoop/Desktop/data/'
-# output_dir = '/Users/signapoop/Desktop/autotune/autotune/sandpit/checkpoint/'
+# output_dir = '/Users/signapoop/Desktop/autotune/autotune/experiments/checkpoint/'
 
 # input_dir = '/data/'
 # output_dir = '/checkpoint/'

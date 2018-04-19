@@ -1,16 +1,17 @@
-import pprint
 import numpy as np
 from sklearn.datasets import fetch_mldata
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
+from ..core.problem_def import Problem
+
 # Choosing n_iter for SGDClassifier is deprecated but we need it to reproduce our result
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
 
-class MNIST_problem():
+class MnistProblem(Problem):
     def __init__(self):
         self.X_train, self.X_test, self.y_train, self.y_test = self._initialise_data()
         self.f = lambda x: self._initialise_objective_function(x)

@@ -8,6 +8,7 @@ class RandomOptimiser(object):
         self.arms = arms_init
         self.val_loss = val_loss_init
         self.Y = Y_init
+        self.name = "Random"
 
     def run_optimization(self, problem, n_resources, max_iter=None, max_time=np.inf, verbosity=False):
         # problem provides generate_random_arm and eval_arm(x)
@@ -30,7 +31,7 @@ class RandomOptimiser(object):
 
         # --- Initialize iterations and running time
         self.time_zero = time.time()
-        self.cum_time  = 0
+        self.cum_time = 0
         self.num_iterations = 0
         self.checkpoints = []
 

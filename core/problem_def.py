@@ -8,7 +8,7 @@ class Problem(object):
 
     def generate_random_arm(self, hps=None):
         if not hps:
-            hps = self.hps
+            hps = self.domain.keys()
         arm = {}
         for hp in hps:
             val = self.domain[hp].get_param_range(1, stochastic=True)
@@ -20,10 +20,10 @@ class Problem(object):
         pp.pprint(self.domain)
 
     @abc.abstractmethod
-    def _initialise_objective_function(self, x):
+    def initialise_objective_function(self, x):
         pass
 
     @abc.abstractmethod
-    def _initialise_domain(self):
+    def initialise_domain(self):
         pass
 

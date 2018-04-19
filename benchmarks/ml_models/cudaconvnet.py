@@ -32,6 +32,7 @@ class CudaConvNet(nn.Module):
         out = self.fc1(out)
         return out
 
+
 # Helper class for local response normalisation
 # Is this efficient?
 class LRN(nn.Module):
@@ -48,7 +49,6 @@ class LRN(nn.Module):
                     padding=int((local_size-1.0)/2))
         self.alpha = alpha
         self.beta = beta
-
 
     def forward(self, x):
         if self.ACROSS_CHANNELS:

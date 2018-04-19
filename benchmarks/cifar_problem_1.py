@@ -10,6 +10,7 @@ import torch.backends.cudnn as cudnn
 import torchvision
 import torchvision.transforms as transforms
 
+from cifar_data_loader import get_train_val_set, get_test_set
 from ..core.problem_def import Problem
 from ..core.params import Param
 from ..util.progress_bar import progress_bar
@@ -18,48 +19,38 @@ from ml_models.cudaconvnet import CudaConvNet
 
 class CifarProblem1(Problem):
 
-    def __init__(self, data_dir, dirname):
-        self.dirname = dirname
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
-        self.data_dir = data_dir
+    def __init__(self, data_dir, output_dir):
         self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-        self.trainloader, self.testloader = self._initialise_data()
-        self.eval_arm = lambda x: self._initialise_objective_function(x)
-        self.domain = self._initialise_domain()
-        self.hps = ['learning_rate', 'scale', 'power', 'lr_step']
+        self.data_dir = data_dir
+        self.output_dir = output_dir
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        self.initialise_data()
+        self.eval_arm = lambda x: self.initialise_objective_function(x)
+        self.domain = self.initialise_domain()
 
         self.use_cuda = torch.cuda.is_available()
         print("Using GPUs? :", self.use_cuda)
 
-    def _initialise_data(self):
-        # TODO: confirm if the following data preprocessing is necessary
-        # TODO: train, val, test split
-
+    def initialise_data(self):
+        # 40k train, 10k val, 10k test
         print('==> Preparing data..')
-        transform_train = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-        ])
+        train_data, val_data, train_sampler, val_sampler = get_train_val_set(data_dir=self.data_dir,
+                                                                             augment=True,
+                                                                             random_seed=0,
+                                                                             valid_size=0.2)
+        test_data = get_test_set(data_dir=self.data_dir)
 
-        transform_test = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-        ])
+        self.val_loader = torch.utils.data.DataLoader(val_data, batch_size=100, sampler=val_sampler,
+                                                      num_workers=2, pin_memory=False)
+        self.test_loader = torch.utils.data.DataLoader(test_data, batch_size=100, shuffle=True,
+                                                       num_workers=2, pin_memory=False)
+        self.train_data = train_data
+        self.train_sampler = train_sampler
 
-        trainset = torchvision.datasets.CIFAR10(root=self.data_dir, train=True, download=True,
-                                                transform=transform_train)
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=100, shuffle=True, num_workers=2)
-
-        testset = torchvision.datasets.CIFAR10(root=self.data_dir, train=False, download=True, transform=transform_test)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
-
-        return trainloader, testloader
-
-    def _initialise_objective_function(self, arm):
+    def initialise_objective_function(self, arm):
         print(arm)
 
         # Tunable hyperparameters
@@ -70,9 +61,17 @@ class CifarProblem1(Problem):
         power = arm['power']
 
         # Default hyperparameters
-        n_batches = n_resources * 100 # each unit of resource = 100 mini batches
-        max_epochs = int(n_batches/500) + 1
         gamma = 0.1
+        batch_size = 100
+
+        # Initialise train_loader based on batch size
+        train_loader = torch.utils.data.DataLoader(self.train_data, batch_size=100,
+                                                   sampler=self.train_sampler,
+                                                   num_workers=2, pin_memory=False)
+
+        n_batches = int(n_resources * 10000 / batch_size)  # each unit of resource = 10,000 examples
+        batches_per_epoch = len(train_loader)
+        max_epochs = int(n_batches / batches_per_epoch) + 1
 
         if lr_step > max_epochs or lr_step == 0:
             step_size = max_epochs
@@ -96,7 +95,7 @@ class CifarProblem1(Problem):
                 param_group['lr'] = lr
 
         # Training
-        def train(epoch, max_batches=500, disp_interval=10):
+        def train(loader, epoch, max_batches=500, disp_interval=10):
             print('\nEpoch: %d' % epoch)
             model.train()
             train_loss = 0
@@ -104,7 +103,7 @@ class CifarProblem1(Problem):
             total = 0
             adjust_learning_rate(optimizer, epoch)
 
-            for batch_idx, (inputs, targets) in enumerate(self.trainloader, start=1):
+            for batch_idx, (inputs, targets) in enumerate(loader, start=1):
                 if self.use_cuda:
                     inputs, targets = inputs.cuda(), targets.cuda()
                 if batch_idx >= max_batches:
@@ -122,17 +121,17 @@ class CifarProblem1(Problem):
                 total += targets.size(0)
                 correct += predicted.eq(targets.data).cpu().sum()
 
-                if batch_idx % disp_interval == 0:
-                    progress_bar(batch_idx, len(self.trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                if batch_idx % disp_interval == 0 or batch_idx == len(loader):
+                    progress_bar(batch_idx, len(loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                              % (train_loss / batch_idx, 100. * correct / total, correct, total))
             return train_loss
 
-        def test(disp_interval=100):
+        def test(loader, disp_interval=100):
             model.eval()
             test_loss = 0
             correct = 0
             total = 0
-            for batch_idx, (inputs, targets) in enumerate(self.testloader, start=1):
+            for batch_idx, (inputs, targets) in enumerate(loader, start=1):
                 if self.use_cuda:
                     inputs, targets = inputs.cuda(), targets.cuda()
                 inputs, targets = Variable(inputs, volatile=True), Variable(targets)
@@ -144,36 +143,27 @@ class CifarProblem1(Problem):
                 total += targets.size(0)
                 correct += predicted.eq(targets.data).cpu().sum()
 
-                if batch_idx % disp_interval == 0:
-                    progress_bar(batch_idx, len(self.testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                if batch_idx % disp_interval == 0 or batch_idx == len(loader):
+                    progress_bar(batch_idx, len(loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                             % (test_loss / batch_idx, 100. * correct / total, correct, total))
 
-            # Save checkpoint.
-            test_acc = correct / total
-            return test_acc
+            return correct / total
 
-        val_acc = 0
-        filename = self.dirname + 'checkpoint.pth.tar'
         for epoch in range(max_epochs):
-            train(epoch, min(n_batches, 500))
-            n_batches = n_batches - 500
+            train(train_loader, epoch, min(n_batches, batches_per_epoch))
+            n_batches = n_batches - batches_per_epoch  # Decrement n_batches remaining
 
-        test_acc = test()
+        # Evaluate trained net on val and test set
+        val_acc = test(self.val_loader)
+        test_acc = test(self.test_loader)
+        return 1-val_acc, 1-test_acc
 
-        # print('Saving..')
-        # state = {
-        #     'model': model.module if self.use_cuda else model,
-        #     'test_acc': test_acc
-        # }
-        # torch.save(state, filename)
-
-        return 1-test_acc
-
-    def _initialise_domain(self):
-        params = {}
-        params['learning_rate'] = Param('learning_rate', np.log(5e-5), np.log(5), distrib='uniform', scale='log')
-        params['scale'] = Param('scale', np.log(5e-6), np.log(5), distrib='uniform', scale='log')
-        params['power'] = Param('power', 0.01, 3, distrib='uniform', scale='linear')
-        params['lr_step'] = Param('lr_step', 1, 5, distrib='uniform', scale='linear', interval=1)
-
+    @staticmethod
+    def initialise_domain():
+        params = {
+            'learning_rate': Param('learning_rate', np.log(5e-5), np.log(5), distrib='uniform', scale='log'),
+            'scale': Param('scale', np.log(5e-6), np.log(5), distrib='uniform', scale='log'),
+            'power': Param('power', 0.01, 3, distrib='uniform', scale='linear'),
+            'lr_step': Param('lr_step', 1, 5, distrib='uniform', scale='linear', interval=1),
+        }
         return params
