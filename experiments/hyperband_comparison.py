@@ -8,17 +8,19 @@ from ..benchmarks.cifar_problem_2 import CifarProblem2
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('-i', '--input_dir', type=str, help='input dir')
 parser.add_argument('-o', '--output_dir', type=str, help='output dir')
+parser.add_argument('-res', '--n_resources', default=3, type=int, help='n_resources')
 args = parser.parse_args()
 
 print(args.input_dir)
 print(args.output_dir)
+print(args.n_resources)
 
 # Define problem instance
 problem = CifarProblem2(args.input_dir, args.output_dir)
 problem.print_domain()
 
 # Define maximum units of resource assigned to each optimisation iteration
-n_resources = 3
+n_resources = args.n_resources
 
 # Run hyperband
 hyperband_opt = HyperbandOptimiser()
