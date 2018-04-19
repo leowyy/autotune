@@ -101,10 +101,11 @@ class CifarProblem2(Problem):
             adjust_learning_rate(optimizer, epoch)
 
             for batch_idx, (inputs, targets) in enumerate(loader, start=1):
-                if self.use_cuda:
-                    inputs, targets = inputs.cuda(), targets.cuda()
                 if batch_idx >= max_batches:
                     break
+
+                if self.use_cuda:
+                    inputs, targets = inputs.cuda(), targets.cuda()
                 optimizer.zero_grad()
                 inputs, targets = Variable(inputs), Variable(targets)
                 outputs = model(inputs)

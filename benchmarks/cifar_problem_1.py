@@ -7,12 +7,9 @@ import torch.optim as optim
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 
-import torchvision
-import torchvision.transforms as transforms
-
 from cifar_data_loader import get_train_val_set, get_test_set
 from ..core.problem_def import Problem
-from ..core.params import Param
+from ..core.params import *
 from ..util.progress_bar import progress_bar
 from ml_models.cudaconvnet import CudaConvNet
 
@@ -65,7 +62,7 @@ class CifarProblem1(Problem):
         batch_size = 100
 
         # Initialise train_loader based on batch size
-        train_loader = torch.utils.data.DataLoader(self.train_data, batch_size=100,
+        train_loader = torch.utils.data.DataLoader(self.train_data, batch_size=batch_size,
                                                    sampler=self.train_sampler,
                                                    num_workers=2, pin_memory=False)
 
@@ -104,10 +101,11 @@ class CifarProblem1(Problem):
             adjust_learning_rate(optimizer, epoch)
 
             for batch_idx, (inputs, targets) in enumerate(loader, start=1):
-                if self.use_cuda:
-                    inputs, targets = inputs.cuda(), targets.cuda()
                 if batch_idx >= max_batches:
                     break
+
+                if self.use_cuda:
+                    inputs, targets = inputs.cuda(), targets.cuda()
                 optimizer.zero_grad()
                 inputs, targets = Variable(inputs), Variable(targets)
                 outputs = model(inputs)
