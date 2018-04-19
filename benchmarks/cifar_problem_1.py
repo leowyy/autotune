@@ -3,22 +3,18 @@ import os
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from torch.autograd import Variable
-import torch.backends.cudnn as cudnn
 
-from cifar_data_loader import get_train_val_set, get_test_set
 from ..core.problem_def import Problem
 from ..core.params import *
 from ..util.progress_bar import progress_bar
+from data.cifar_data_loader import get_train_val_set, get_test_set
 from ml_models.cudaconvnet import CudaConvNet
 
 
 class CifarProblem1(Problem):
 
     def __init__(self, data_dir, output_dir):
-        self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
         self.data_dir = data_dir
         self.output_dir = output_dir
         if not os.path.exists(output_dir):
@@ -49,9 +45,9 @@ class CifarProblem1(Problem):
 
     def initialise_objective_function(self, arm):
         print(arm)
+        n_resources = arm['n_resources']
 
         # Tunable hyperparameters
-        n_resources = arm['n_resources']
         base_lr = arm['learning_rate']
         lr_step = arm['lr_step']
         scale = arm['scale']
@@ -80,10 +76,10 @@ class CifarProblem1(Problem):
         if self.use_cuda:
             model.cuda()
             model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
-            cudnn.benchmark = True
+            torch.backends.cudnn.benchmark = True
 
         criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.004)
+        optimizer = torch.optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.004)
 
         def adjust_learning_rate(optimizer, epoch):
             """Sets the learning rate to the initial LR decayed by gamma every 'step_size' epochs"""
@@ -156,8 +152,7 @@ class CifarProblem1(Problem):
         test_acc = test(self.test_loader)
         return 1-val_acc, 1-test_acc
 
-    @staticmethod
-    def initialise_domain():
+    def initialise_domain(self):
         params = {
             'learning_rate': Param('learning_rate', np.log(5e-5), np.log(5), distrib='uniform', scale='log'),
             'scale': Param('scale', np.log(5e-6), np.log(5), distrib='uniform', scale='log'),

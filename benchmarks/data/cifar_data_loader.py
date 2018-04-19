@@ -21,8 +21,6 @@ def get_train_val_set(data_dir,
     multi-process iterators over the CIFAR-10 dataset. A sample
     9x9 grid of the images can be optionally displayed.
 
-    If using CUDA, num_workers should be set to 1 and pin_memory to True.
-
     Params
     ------
     - data_dir: path directory to the dataset.
@@ -33,10 +31,6 @@ def get_train_val_set(data_dir,
     - valid_size: percentage split of the training set used for
       the validation set. Should be a float in the range [0, 1].
     - shuffle: whether to shuffle the train/validation indices.
-    - show_sample: plot 9x9 sample grid of the dataset.
-    - num_workers: number of subprocesses to use when loading the dataset.
-    - pin_memory: whether to copy tensors into CUDA pinned memory. Set it to
-      True if using GPU.
 
     Returns
     -------
@@ -107,11 +101,6 @@ def get_test_set(data_dir):
     Params
     ------
     - data_dir: path directory to the dataset.
-    - batch_size: how many samples per batch to load.
-    - shuffle: whether to shuffle the dataset after every epoch.
-    - num_workers: number of subprocesses to use when loading the dataset.
-    - pin_memory: whether to copy tensors into CUDA pinned memory. Set it to
-      True if using GPU.
 
     Returns
     -------

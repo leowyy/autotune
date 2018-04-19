@@ -1,3 +1,4 @@
+from ..benchmarks.mnist_problem import MnistProblem
 from ..benchmarks.cifar_problem_1 import CifarProblem1
 from ..benchmarks.cifar_problem_2 import CifarProblem2
 
@@ -6,7 +7,7 @@ output_dir = '/Users/signapoop/Desktop/autotune/autotune/experiments/checkpoint/
 
 
 def sampling_arms(n_arms):
-    problem = CifarProblem1(data_dir, output_dir)
+    problem = MnistProblem(data_dir, output_dir)
     problem.print_domain()
 
     for i in range(n_arms):

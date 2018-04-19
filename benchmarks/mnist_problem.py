@@ -1,73 +1,144 @@
-import numpy as np
-from sklearn.datasets import fetch_mldata
-from sklearn.linear_model import SGDClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from __future__ import division
+import os
+import torch
+import torch.nn as nn
+from torch.autograd import Variable
 
 from ..core.problem_def import Problem
-
-# Choosing n_iter for SGDClassifier is deprecated but we need it to reproduce our result
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning) 
+from ..core.params import *
+from ..util.progress_bar import progress_bar
+from data.mnist_data_loader import get_train_val_set, get_test_set
+from ml_models.logistic_regression import LogisticRegression
 
 
 class MnistProblem(Problem):
-    def __init__(self):
-        self.X_train, self.X_test, self.y_train, self.y_test = self._initialise_data()
-        self.f = lambda x: self._initialise_objective_function(x)
-        self.domain = self._initialise_domain()
+    def __init__(self, data_dir, output_dir):
+        self.data_dir = data_dir
+        self.output_dir = output_dir
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
-    def _initialise_data(self, n_train = 5000, n_test = 10000):
-        # Load dataset
-        mnist = fetch_mldata('MNIST original')
-        X = mnist.data.astype('float64')
-        X = X.reshape((X.shape[0], -1))
-        y = mnist.target
+        self.initialise_data()
+        self.eval_arm = lambda x: self.initialise_objective_function(x)
+        self.domain = self.initialise_domain()
 
-        # Perform a train-test split for validation,
-        # a standard scaler transforms the data in each dimension to zero mean and unit variance
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, train_size = n_train, test_size = n_test)
+        self.use_cuda = torch.cuda.is_available()
+        print("Using GPUs? : {}".format(self.use_cuda))
 
-        self.scaler = StandardScaler()
-        X_train = self.scaler.fit_transform(X_train)
-        X_test = self.scaler.transform(X_test)
+    def initialise_data(self):
+        print('==> Preparing data..')
+        train_data, val_data, train_sampler, val_sampler = get_train_val_set(data_dir=self.data_dir,
+                                                                             random_seed=0,
+                                                                             valid_size=0.2)
+        test_data = get_test_set(data_dir=self.data_dir)
 
-        # for a multi-class problem:
-        self.classes = np.unique(y)
+        self.val_loader = torch.utils.data.DataLoader(val_data, batch_size=100, sampler=val_sampler,
+                                                      num_workers=2, pin_memory=False)
+        self.test_loader = torch.utils.data.DataLoader(test_data, batch_size=100, shuffle=True,
+                                                       num_workers=2, pin_memory=False)
+        self.train_data = train_data
+        self.train_sampler = train_sampler
 
-        return X_train, X_test, y_train, y_test
+    def initialise_objective_function(self, arm):
+        print(arm)
+        n_resources = arm['n_resources']
 
-    def _initialise_objective_function(self, x):
+        # Tunable hyperparameters
+        base_lr = arm['learning_rate']
+        momentum = arm['momentum']
+        weight_decay = arm['weight_decay']
+        batch_size = arm['batch_size']
 
-        x = np.atleast_2d(x)
-        fs = np.zeros((x.shape[0],1))
-        for i in range(x.shape[0]):
-            fs[i] = 0
-            gamma = np.exp(x[i,0]) 		# learning rate, log scale
-            alpha = np.exp(x[i,1]) 		# l2 regulariser, log scale
-            n_iter = int(x[i,2])		# num epochs
-            batch_size = int(x[i,3])	# mini batch size
-            clf = SGDClassifier(loss='log', penalty='l2', alpha=alpha,
-                                learning_rate='constant', eta0=gamma,
-                                n_iter=1)
+        # Initialise train_loader based on batch size
+        train_loader = torch.utils.data.DataLoader(self.train_data, batch_size=batch_size,
+                                                   sampler=self.train_sampler,
+                                                   num_workers=2, pin_memory=False)
 
-            for j in range(n_iter):
-                for (X_batch, y_batch) in self._next_batch(self.X_train, self.y_train, batch_size):
-                    clf.partial_fit(X_batch, y_batch, classes=self.classes)
+        # Compute derived hyperparameters
+        n_batches = int(n_resources * 10000 / batch_size)  # each unit of resource = 10,000 examples
+        batches_per_epoch = len(train_loader)
+        max_epochs = int(n_batches / batches_per_epoch) + 1
 
-            score = clf.score(self.X_test, self.y_test)
-            fs[i] = 1 - score  # classification error
-        return fs
+        input_size = 784
+        num_classes = 10
+        model = LogisticRegression(input_size, num_classes)
+        if self.use_cuda:
+            model.cuda()
+            model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
+            torch.backends.cudnn.benchmark = True
 
-    def _initialise_domain(self):
-        domain =   [{'name': 'gamma_log','type': 'continuous', 'domain': (-6,0)},
-                    {'name': 'alpha_log','type': 'continuous', 'domain': (-6,0)},
-                    {'name': 'n_iter','type': 'continuous', 'domain': (5,1000)},
-                    {'name': 'batch_size','type': 'continuous', 'domain': (20,2000)}]
-        return domain
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=base_lr, momentum=momentum, weight_decay=weight_decay)
 
-    # helper function for mini-batch training
-    def _next_batch(self, X, y, batch_size):
-        for i in np.arange(0, X.shape[0], batch_size):
-            yield (X[i:i + batch_size], y[i:i + batch_size])
+        # Training
+        def train(loader, epoch, max_batches, disp_interval=10):
+            print('\nEpoch: %d' % epoch)
+            model.train()
+            train_loss = 0
+            correct = 0
+            total = 0
+
+            for batch_idx, (inputs, targets) in enumerate(loader, start=1):
+                if batch_idx >= max_batches:
+                    break
+
+                if self.use_cuda:
+                    inputs, targets = inputs.cuda(), targets.cuda()
+                optimizer.zero_grad()
+                inputs, targets = Variable(inputs), Variable(targets)
+                outputs = model(inputs)
+                loss = criterion(outputs, targets)
+                loss.backward()
+                optimizer.step()
+
+                train_loss += loss.data[0]
+                _, predicted = torch.max(outputs.data, 1)
+                total += targets.size(0)
+                correct += predicted.eq(targets.data).cpu().sum()
+
+                if batch_idx % disp_interval == 0 or batch_idx == len(loader):
+                    progress_bar(batch_idx, len(loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                             % (train_loss / batch_idx, 100. * correct / total, correct, total))
+            return train_loss
+
+        def test(loader, disp_interval=100):
+            model.eval()
+            test_loss = 0
+            correct = 0
+            total = 0
+            for batch_idx, (inputs, targets) in enumerate(loader, start=1):
+                if self.use_cuda:
+                    inputs, targets = inputs.cuda(), targets.cuda()
+                inputs, targets = Variable(inputs, volatile=True), Variable(targets)
+                outputs = model(inputs)
+                loss = criterion(outputs, targets)
+
+                test_loss += loss.data[0]
+                _, predicted = torch.max(outputs.data, 1)
+                total += targets.size(0)
+                correct += predicted.eq(targets.data).cpu().sum()
+
+                if batch_idx % disp_interval == 0 or batch_idx == len(loader):
+                    progress_bar(batch_idx, len(loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                            % (test_loss / batch_idx, 100. * correct / total, correct, total))
+
+            return correct / total
+
+        # Train net for max_epochs
+        for epoch in range(max_epochs):
+            train(train_loader, epoch, min(n_batches, batches_per_epoch))
+            n_batches = n_batches - batches_per_epoch  # Decrement n_batches remaining
+
+        # Evaluate trained net on val and test set
+        val_acc = test(self.val_loader)
+        test_acc = test(self.test_loader)
+        return 1 - val_acc, 1 - test_acc
+
+    def initialise_domain(self):
+        params = {
+            'learning_rate': Param('learning_rate', -6, 0, distrib='uniform', scale='log', logbase=10),
+            'weight_decay': Param('weight_decay', -6, -1, distrib='uniform', scale='log', logbase=10),
+            'momentum': Param('momentum', 0.3, 0.999, distrib='uniform', scale='linear'),
+            'batch_size': Param('batch_size', 20, 2000, distrib='uniform', scale='linear', interval=1),
+        }
+        return params
