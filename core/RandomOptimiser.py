@@ -13,8 +13,6 @@ class RandomOptimiser(object):
     def run_optimization(self, problem, n_resources, max_iter=None, max_time=np.inf, verbosity=False):
         # problem provides generate_random_arm and eval_arm(x)
 
-        print("---- Running random optimisation ----")
-
         # --- Setting up stop conditions
         if (max_iter is None) and (max_time is None):
             self.max_iter = 0
@@ -28,6 +26,12 @@ class RandomOptimiser(object):
         else:
             self.max_iter = max_iter
             self.max_time = max_time
+
+        print("---- Running random optimisation ----")
+        print("Resource per iteration = {}".format(n_resources))
+        print("Max iterations = {}".format(max_iter))
+        print("Max time  = {}".format(max_time))
+        print("----------------------------------------")
 
         # --- Initialize iterations and running time
         self.time_zero = time.time()

@@ -13,6 +13,9 @@ class HyperbandOptimiser(RandomOptimiser):
         # problem provides generate_random_arm and eval_arm(x)
 
         print("---- Running hyperband optimisation ----")
+        print("Max iterations = {}".format(max_iter))
+        print("Halving rate eta = {}".format(eta))
+        print("----------------------------------------")
 
         # --- Initialize iterations and running time
         self.time_zero = time.time()
