@@ -27,10 +27,10 @@ class RandomOptimiser(object):
             self.max_iter = max_iter
             self.max_time = max_time
 
-        print("---- Running random optimisation ----")
+        print("\n---- Running random optimisation ----")
         print("Resource per iteration = {}".format(n_resources))
         print("Max iterations = {}".format(max_iter))
-        print("Max time  = {}".format(max_time))
+        print("Max time  = {}s".format(max_time))
         print("----------------------------------------")
 
         # --- Initialize iterations and running time

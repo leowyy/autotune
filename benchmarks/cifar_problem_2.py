@@ -27,7 +27,7 @@ class CifarProblem2(Problem):
         self.domain = self.initialise_domain()
 
         self.use_cuda = torch.cuda.is_available()
-        print("Using GPUs? :", self.use_cuda)
+        print("Using GPUs? : {}".format(self.use_cuda))
 
     def initialise_data(self):
         # 40k train, 10k val, 10k test

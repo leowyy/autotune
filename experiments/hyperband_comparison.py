@@ -26,7 +26,7 @@ hyperband_opt.run_optimization(problem, max_iter=n_resources, verbosity=True)
 
 # Constrain random optimisation to the same time budget
 time_budget = hyperband_opt.checkpoints[-1]
-print("Time budget = {}".format(time_budget))
+print("Time budget = {}s".format(time_budget))
 
 random_opt = RandomOptimiser()
 random_opt.run_optimization(problem, n_resources, max_time=time_budget, verbosity=True)

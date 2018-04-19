@@ -12,7 +12,7 @@ class HyperbandOptimiser(RandomOptimiser):
     def run_optimization(self, problem, n_units=None, max_iter=None, eta=3, verbosity=False):
         # problem provides generate_random_arm and eval_arm(x)
 
-        print("---- Running hyperband optimisation ----")
+        print("\n---- Running hyperband optimisation ----")
         print("Max iterations = {}".format(max_iter))
         print("Halving rate eta = {}".format(eta))
         print("----------------------------------------")
