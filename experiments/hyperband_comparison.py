@@ -18,7 +18,7 @@ problem = CifarProblem2(args.input_dir, args.output_dir)
 problem.print_domain()
 
 # Define maximum units of resource assigned to each optimisation iteration
-n_resources = 81
+n_resources = 3
 
 # Run hyperband
 hyperband_opt = HyperbandOptimiser()
