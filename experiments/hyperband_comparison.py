@@ -25,18 +25,16 @@ problem.print_domain()
 n_resources = args.n_resources
 
 # # Run hyperband
-# hyperband_opt = HyperbandOptimiser()
-# hyperband_opt.run_optimization(problem, max_iter=n_resources, verbosity=True)
-#
-# # Constrain random optimisation to the same time budget
-# time_budget = hyperband_opt.checkpoints[-1]
-# print("Time budget = {}s".format(time_budget))
+hyperband_opt = HyperbandOptimiser()
+hyperband_opt.run_optimization(problem, max_iter=n_resources, verbosity=True)
 
-time_budget = 4711.12189317
+# Constrain random optimisation to the same time budget
+time_budget = hyperband_opt.checkpoints[-1]
+print("Time budget = {}s".format(time_budget))
+
 random_opt = RandomOptimiser()
 random_opt.run_optimization(problem, n_resources, max_time=time_budget, verbosity=True)
 
 filename = args.output_dir + 'results.pkl'
 with open(filename, 'wb') as f:
-    # pickle.dump([hyperband_opt, random_opt], f)
-    pickle.dump([random_opt], f)
+    pickle.dump([hyperband_opt, random_opt], f)

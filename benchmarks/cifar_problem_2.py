@@ -27,7 +27,8 @@ class CifarProblem2(Problem):
         print("Using GPUs? : {}".format(self.use_cuda))
 
         # Set this if you only want to tune a subset of the hyperparameters
-        self.hps = ['learning_rate', 'n_units_1', 'n_units_2', 'n_units_3', 'batch_size']
+        self.hps = None
+        # self.hps = ['learning_rate', 'n_units_1', 'n_units_2', 'n_units_3', 'batch_size']
 
     def initialise_data(self):
         # 40k train, 10k val, 10k test

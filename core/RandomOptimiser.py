@@ -46,7 +46,7 @@ class RandomOptimiser(object):
 
             # Draw random sample
             arm = problem.generate_random_arm(problem.hps)
-            arm['n_resources'] = n_resources  # Fix this
+            arm['n_resources'] = n_resources  # Fix this?
 
             # Evaluate arm on problem
             val_loss, Y_new = problem.eval_arm(arm)
