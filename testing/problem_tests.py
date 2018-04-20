@@ -7,11 +7,11 @@ output_dir = '/Users/signapoop/Desktop/autotune/autotune/experiments/checkpoint/
 
 
 def sampling_arms(n_arms):
-    problem = MnistProblem(data_dir, output_dir)
+    problem = CifarProblem2(data_dir, output_dir)
     problem.print_domain()
 
     for i in range(n_arms):
-        arm = problem.generate_random_arm()
+        arm = problem.generate_random_arm(problem.hps)
         print(arm)
 
 

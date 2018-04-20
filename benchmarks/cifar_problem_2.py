@@ -25,6 +25,9 @@ class CifarProblem2(Problem):
         self.use_cuda = torch.cuda.is_available()
         print("Using GPUs? : {}".format(self.use_cuda))
 
+        # Set this if you only want to tune a subset of the hyperparameters
+        self.hps = ['learning_rate', 'n_units_1', 'n_units_2', 'n_units_3', 'batch_size']
+
     def initialise_data(self):
         # 40k train, 10k val, 10k test
         print('==> Preparing data..')
@@ -159,9 +162,9 @@ class CifarProblem2(Problem):
             'n_units_2': Param('n_units_2', 4, 8, distrib='uniform', scale='log', logbase=2, interval=1),
             'n_units_3': Param('n_units_3', 4, 8, distrib='uniform', scale='log', logbase=2, interval=1),
             'batch_size': Param('batch_size', 32, 512, distrib='uniform', scale='linear', interval=1),
-            'lr_step': Param('lr_step', 1, 5, distrib='uniform', scale='linear', interval=1),
-            'gamma': Param('gamma', -3, -1, distrib='uniform', scale='log', logbase=10),
-            'weight_decay': Param('weight_decay', -6, -1, distrib='uniform', scale='log', logbase=10),
-            'momentum': Param('momentum', 0.3, 0.999, distrib='uniform', scale='linear'),
+            'lr_step': Param('lr_step', 1, 5, distrib='uniform', init_val=1, scale='linear', interval=1),
+            'gamma': Param('gamma', -3, -1, distrib='uniform', init_val=0.1, scale='log', logbase=10),
+            'weight_decay': Param('weight_decay', -6, -1, init_val=0.004, distrib='uniform', scale='log', logbase=10),
+            'momentum': Param('momentum', 0.3, 0.999, init_val=0.9, distrib='uniform', scale='linear'),
         }
         return params

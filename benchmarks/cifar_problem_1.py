@@ -27,6 +27,8 @@ class CifarProblem1(Problem):
         self.use_cuda = torch.cuda.is_available()
         print("Using GPUs? : {}".format(self.use_cuda))
 
+        self.hps = None
+
     def initialise_data(self):
         # 40k train, 10k val, 10k test
         print('==> Preparing data..')

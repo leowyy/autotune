@@ -25,6 +25,8 @@ class MnistProblem(Problem):
         self.use_cuda = torch.cuda.is_available()
         print("Using GPUs? : {}".format(self.use_cuda))
 
+        self.hps = None
+
     def initialise_data(self):
         print('==> Preparing data..')
         train_data, val_data, train_sampler, val_sampler = get_train_val_set(data_dir=self.data_dir,
