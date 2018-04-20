@@ -2,7 +2,7 @@ AutoTune
 =========
 How can we optimize the hyperparameters of a machine learning model efficiently?
 
-Tuning a convolutional net on CIFAR10, 9 hyperparam
+Tuning a conv net on CIFAR10
 -----
 <img src="https://github.com/signapoop/autotune/blob/master/img/cifar_9hps.png" width="560">
 
