@@ -6,9 +6,6 @@ class Problem(object):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self):
-        self.domain = None
-
     def generate_random_arm(self, hps=None):
         if not hps:
             hps = self.domain.keys()

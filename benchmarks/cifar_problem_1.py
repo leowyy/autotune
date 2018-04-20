@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+from torch.optim.lr_scheduler import StepLR
 
 from ..core.problem_def import Problem
 from ..core.params import *
@@ -82,12 +83,7 @@ class CifarProblem1(Problem):
 
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.004)
-
-        def adjust_learning_rate(optimizer, epoch):
-            """Sets the learning rate to the initial LR decayed by gamma every 'step_size' epochs"""
-            lr = base_lr * (gamma ** (epoch // step_size))
-            for param_group in optimizer.param_groups:
-                param_group['lr'] = lr
+        lr_scheduler = StepLR(optimizer, step_size=step_size, gamma=gamma)
 
         # Training
         def train(loader, epoch, max_batches=500, disp_interval=10):
@@ -96,7 +92,6 @@ class CifarProblem1(Problem):
             train_loss = 0
             correct = 0
             total = 0
-            adjust_learning_rate(optimizer, epoch)
 
             for batch_idx, (inputs, targets) in enumerate(loader, start=1):
                 if batch_idx >= max_batches:
@@ -146,6 +141,7 @@ class CifarProblem1(Problem):
             return correct / total
 
         for epoch in range(max_epochs):
+            lr_scheduler.step()
             train(train_loader, epoch, min(n_batches, batches_per_epoch))
             n_batches = n_batches - batches_per_epoch  # Decrement n_batches remaining
 
