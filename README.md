@@ -1,6 +1,9 @@
-### AutoTune: How can we optimize the hyperparameters of a machine learning model efficiently?
+AutoTune
+=========
+How can we optimize the hyperparameters of a machine learning model efficiently?
 
-__Tuning a convolutional net on CIFAR10, 9 hyperparam__
+Tuning a convolutional net on CIFAR10, 9 hyperparam
+-----
 <img src="https://github.com/signapoop/autotune/blob/master/img/cifar_9hps.png" width="600">
 
 Defining a problem instance
@@ -23,4 +26,4 @@ arm = problem.generate_random_arm()
 f_val = problem.eval_arm(arm)
 ```
 
-__Stay tuned for more updates...__
+___Stay tuned for more updates...___
