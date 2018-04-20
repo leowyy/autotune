@@ -3,8 +3,9 @@ import argparse
 
 from ..core.HyperbandOptimiser import HyperbandOptimiser
 from ..core.RandomOptimiser import RandomOptimiser
-from ..benchmarks.mnist_problem import MnistProblem
-#from ..benchmarks.cifar_problem_1 import CifarProblem1
+# from ..benchmarks.mnist_problem import MnistProblem
+# from ..benchmarks.cifar_problem_1 import CifarProblem1
+from ..benchmarks.cifar_problem_2 import CifarProblem2
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('-i', '--input_dir', type=str, help='input dir')
@@ -17,7 +18,7 @@ print("Output directory: {}".format(args.output_dir))
 print("# resources: {}".format(args.n_resources))
 
 # Define problem instance
-problem = MnistProblem(args.input_dir, args.output_dir)
+problem = CifarProblem2(args.input_dir, args.output_dir)
 problem.print_domain()
 
 # Define maximum units of resource assigned to each optimisation iteration
