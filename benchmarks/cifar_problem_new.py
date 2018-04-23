@@ -69,7 +69,7 @@ class CifarProblemNew(Problem):
 
             torch.save({
                 'epoch': 0,
-                'model': model.module if self.use_cuda else model,
+                'model': model,
                 'optimizer': optimizer,
                 'val_error': 1,
                 'test_error': 1,
