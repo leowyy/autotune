@@ -7,9 +7,9 @@ class Problem(object):
     __metaclass__ = abc.ABCMeta
 
     def generate_arms(self, n, hps=None):
-        arms = {}
+        arms = []
         for i in range(n):
-            arms[i] = self.generate_random_arm(hps)
+            arms.append(self.generate_random_arm(hps))
         return arms
 
     def generate_random_arm(self, hps=None):

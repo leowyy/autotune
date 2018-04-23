@@ -85,14 +85,18 @@ class CifarProblemNew(Problem):
             dirname = "arm" + str(start_count+i)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
+            arms[i]['n_resources'] = 0
             arms[i]['dir'] = self.output_dir + dirname
             construct_model(arms[i])
         return arms
 
     def eval_arm(self, arm, n_resources):
         print("\nLoading arm with parameters.....")
+
+        arm['n_resources'] = arm['n_resources'] + n_resources
         print(arm)
 
+        # Load model and optimiser from file to resume training
         checkpoint = torch.load(arm['filename'])
         start_epoch = checkpoint['epoch']
         model = checkpoint['model']

@@ -16,7 +16,7 @@ class ProblemTest(object):
         return arms
 
     def run_test(self, arms, n_resources):
-        for arm in arms.values():
+        for arm in arms:
             print(arm)
             self.problem.eval_arm(arm, n_resources)
 

@@ -37,7 +37,8 @@ class HyperbandOptimiser(RandomOptimiser):
             r = max_iter*eta**(-s)  # initial number of iterations to run configurations for
 
             #### Begin Finite Horizon Successive Halving with (n,r)
-            arms = [ problem.generate_random_arm(problem.hps) for i in range(n) ]
+            # arms = [ problem.generate_random_arm(problem.hps) for i in range(n) ]
+            arms = problem.generate_arms(n, problem.hps)
             for i in range(s+1):
                 # Run each of the n_i configs for r_i iterations and keep best n_i/eta
                 n_i = n*eta**(-i)
@@ -47,8 +48,8 @@ class HyperbandOptimiser(RandomOptimiser):
 
                 for arm in arms:
                     # Assign r_i units of resource to arm
-                    arm['n_resources'] = r_i
-                    val_loss, test_loss = problem.eval_arm(arm)
+                    # arm['n_resources'] = r_i
+                    val_loss, test_loss = problem.eval_arm(arm, r_i)
                     val_losses.append(val_loss)
                     test_losses.append(test_loss)
 
