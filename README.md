@@ -8,7 +8,7 @@ Tuning a conv net on CIFAR10
 
 Defining a problem instance
 -----
-1) Specify your hyperparameter domain in `self.initialise_domain()`
+1) Specify your hyperparameter domain in `self.initialise_domain()`, eg.
 ```python
 def initialise_domain(self):
     params = {
@@ -20,11 +20,11 @@ def initialise_domain(self):
     return params
 ```
 
-2) Specify your objective function in `self.initialise_objective_function(x)`
+2) Specify your objective function in `self.eval_arm(params, n_resources)`, eg.
 ```python
-def initialise_objective_function(self, params):
+def eval_arm(self, params, n_resources):
     model = generate_net(params)
-    model.train()
+    model.train(n_iter=n_resources)
     acc = model.test()
     return 1-acc
 ```
@@ -32,8 +32,8 @@ def initialise_objective_function(self, params):
 3) Test your problem with the following code snippet:
 ```python
 problem = MyProblem()
-params = problem.generate_random_arm()  # Draws a sample from the hyperparameter space
-f_val = problem.eval_arm(params)  # Evaluates the set of hyperparameters
+params = problem.generate_arms(1)  # Draws a sample from the hyperparameter space
+f_val = problem.eval_arm(params[0], 1)  # Evaluates the set of hyperparameters
 ```
 
 ___Stay tuned for more updates...___
