@@ -22,7 +22,6 @@ class CifarProblem1(Problem):
             os.makedirs(output_dir)
 
         self.initialise_data()
-        self.eval_arm = lambda x: self.initialise_objective_function(x)
         self.domain = self.initialise_domain()
 
         self.use_cuda = torch.cuda.is_available()
@@ -46,7 +45,7 @@ class CifarProblem1(Problem):
         self.train_data = train_data
         self.train_sampler = train_sampler
 
-    def initialise_objective_function(self, arm):
+    def eval_arm(self, arm):
         print(arm)
         n_resources = arm['n_resources']
 

@@ -6,6 +6,12 @@ class Problem(object):
 
     __metaclass__ = abc.ABCMeta
 
+    def generate_arms(self, n, hps=None):
+        arms = {}
+        for i in range(n):
+            arms[i] = self.generate_random_arm(hps)
+        return arms
+
     def generate_random_arm(self, hps=None):
         if not hps:
             hps = self.domain.keys()
@@ -27,7 +33,7 @@ class Problem(object):
         pp.pprint(self.domain)
 
     @abc.abstractmethod
-    def initialise_objective_function(self, x):
+    def eval_arm(self, arm, n_resources):
         pass
 
     @abc.abstractmethod
