@@ -34,9 +34,9 @@ if __name__ == "__main__":
     print(args.output_dir)
 
     problem_test = ProblemTest(args.input_dir, args.output_dir)
-    arms = problem_test.sampling_arms(81)
-    problem_test.run_test(arms, 1)
+    arms = problem_test.sampling_arms(1)
+    problem_test.run_test(arms, 27)
     print("\nPausing and resuming........................\n")
-    problem_test.run_test(arms, 3)
+    problem_test.run_test(arms, 9)
 
 

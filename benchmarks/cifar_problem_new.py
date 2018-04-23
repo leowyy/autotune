@@ -50,7 +50,7 @@ class CifarProblemNew(Problem):
         os.chdir(self.output_dir)
 
         def construct_model(arm):
-            arm['filename'] = arm['dir'] + "/model.t7"
+            arm['filename'] = arm['dir'] + "/model.pth"
             # Construct model and optimizer
             base_lr = arm['learning_rate']
             n_units_1 = arm['n_units_1']
