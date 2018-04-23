@@ -36,4 +36,8 @@ params = problem.generate_arms(1)  # Draws a sample from the hyperparameter spac
 f_val = problem.eval_arm(params[0], 1)  # Evaluates the set of hyperparameters
 ```
 
+References
+-----
+ - L. Li *et al* (2016), Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
+
 ___Stay tuned for more updates...___
