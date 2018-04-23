@@ -37,6 +37,6 @@ if __name__ == "__main__":
     arms = problem_test.sampling_arms(1)
     problem_test.run_test(arms, 27)
     print("\nPausing and resuming........................\n")
-    problem_test.run_test(arms, 9)
+    problem_test.run_test(arms, 1)
 
 

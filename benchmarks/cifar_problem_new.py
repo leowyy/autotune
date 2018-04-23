@@ -92,9 +92,9 @@ class CifarProblemNew(Problem):
         return arms
 
     def eval_arm(self, arm, n_resources):
+        print("\nLoading arm with parameters.....")
         print(arm)
 
-        print("Loading arm.....")
         checkpoint = torch.load(arm['filename'])
         start_epoch = checkpoint['epoch']
         model = checkpoint['model']
@@ -121,7 +121,7 @@ class CifarProblemNew(Problem):
             step_size = int(max_epochs / lr_step)
 
         criterion = nn.CrossEntropyLoss()
-        lr_scheduler = StepLR(optimizer, step_size=step_size, gamma=gamma)
+        lr_scheduler = StepLR(optimizer, step_size=step_size, gamma=gamma, last_epoch=start_epoch)
 
         # Training
         def train(loader, epoch, max_batches, disp_interval=10):
@@ -191,7 +191,7 @@ class CifarProblemNew(Problem):
         print("Saving file...")
         torch.save({
             'epoch': start_epoch+max_epochs,
-            'model': model.module if self.use_cuda else model,
+            'model': model,
             'optimizer': optimizer,
             'val_error': 1-val_acc,
             'test_error': 1-test_acc,
