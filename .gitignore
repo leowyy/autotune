@@ -1,6 +1,10 @@
 data/*
 !data/.gitkeep
 
+experiments/checkpoint/*
+!experiments/checkpoint/.gitkeep
+
+
 # Prerequisites
 *.d
 
