@@ -65,7 +65,7 @@ class CifarProblemNew(Problem):
                 model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
                 torch.backends.cudnn.benchmark = True
 
-            optimizer = torch.optim.SGD(model.parameters(), lr=base_lr, momentum=momentum, weight_decay=weight_decay)
+            optimizer = torch.optim.SGD({'params': model.parameters(), 'initial_lr': base_lr}, lr=base_lr, momentum=momentum, weight_decay=weight_decay)
 
             torch.save({
                 'epoch': 0,
