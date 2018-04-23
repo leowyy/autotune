@@ -1,10 +1,8 @@
 from __future__ import division
 import os
-import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from torch.optim.lr_scheduler import StepLR
 
 from ..core.problem_def import Problem
 from ..core.params import *
@@ -65,7 +63,7 @@ class CifarProblemNew(Problem):
                 model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
                 torch.backends.cudnn.benchmark = True
 
-            optimizer = torch.optim.SGD({'params': model.parameters(), 'initial_lr': base_lr}, lr=base_lr, momentum=momentum, weight_decay=weight_decay)
+            optimizer = torch.optim.SGD(model.parameters(), lr=base_lr, momentum=momentum, weight_decay=weight_decay)
 
             torch.save({
                 'epoch': 0,
@@ -101,6 +99,7 @@ class CifarProblemNew(Problem):
         optimizer = checkpoint['optimizer']
 
         # Rest of the tunable hyperparameters
+        base_lr = arm['learning_rate']
         batch_size = arm['batch_size']
         lr_step = arm['lr_step']
         gamma = arm['gamma']
@@ -121,7 +120,12 @@ class CifarProblemNew(Problem):
             step_size = int(max_epochs / lr_step)
 
         criterion = nn.CrossEntropyLoss()
-        lr_scheduler = StepLR(optimizer, step_size=step_size, gamma=gamma, last_epoch=start_epoch)
+
+        def adjust_learning_rate(optimizer, epoch):
+            """Sets the learning rate to the initial LR decayed by gamma every step_size epochs"""
+            lr = base_lr * (gamma ** (epoch // step_size))
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = lr
 
         # Training
         def train(loader, epoch, max_batches, disp_interval=10):
@@ -179,7 +183,7 @@ class CifarProblemNew(Problem):
 
         # Train net for max_epochs
         for epoch in range(start_epoch, start_epoch+max_epochs):
-            lr_scheduler.step()  # fix this!
+            adjust_learning_rate(optimizer, epoch)
             train(train_loader, epoch, min(n_batches, batches_per_epoch))
             n_batches = n_batches - batches_per_epoch  # Decrement n_batches remaining
 
