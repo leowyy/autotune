@@ -45,11 +45,14 @@ class RandomOptimiser(object):
                 break
 
             # Draw random sample
-            arm = problem.generate_random_arm(problem.hps)
-            arm['n_resources'] = n_resources  # Fix this?
+            arms = problem.generate_arms(1, problem.hps)
+            arm = arms[0]
+            # arm = problem.generate_random_arm(problem.hps)
+            # arm['n_resources'] = n_resources  # Fix this?
 
             # Evaluate arm on problem
-            val_loss, Y_new = problem.eval_arm(arm)
+            # val_loss, Y_new = problem.eval_arm(arm)
+            val_loss, Y_new = problem.eval_arm(arm, n_resources)
 
             # Update history
             self.arms.append(arm)
