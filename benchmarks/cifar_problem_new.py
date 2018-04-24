@@ -79,7 +79,11 @@ class CifarProblemNew(TorchNetProblem):
         n_batches = int(n_resources * 10000 / batch_size)  # each unit of resource = 10,000 examples
         batches_per_epoch = len(train_loader)
         max_epochs = int(n_batches / batches_per_epoch) + 1
-        step_size = min(max_epochs, int(max_epochs / lr_step))
+        
+        if lr_step > max_epochs:
+            step_size = max_epochs
+        else:
+            step_size = int(max_epochs / lr_step)
 
         criterion = nn.CrossEntropyLoss()
 
