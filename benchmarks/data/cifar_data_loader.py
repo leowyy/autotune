@@ -13,7 +13,6 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 def get_train_val_set(data_dir,
                       augment,
-                      random_seed,
                       valid_size=0.2,
                       shuffle=True):
     """
@@ -27,7 +26,6 @@ def get_train_val_set(data_dir,
     - batch_size: how many samples per batch to load.
     - augment: whether to apply the data augmentation scheme
       mentioned in the paper. Only applied on the train split.
-    - random_seed: fix seed for reproducibility.
     - valid_size: percentage split of the training set used for
       the validation set. Should be a float in the range [0, 1].
     - shuffle: whether to shuffle the train/validation indices.
@@ -81,7 +79,6 @@ def get_train_val_set(data_dir,
     split = int(np.floor(valid_size * num_train))
 
     if shuffle:
-        np.random.seed(random_seed)
         np.random.shuffle(indices)
 
     train_idx, val_idx = indices[split:], indices[:split]

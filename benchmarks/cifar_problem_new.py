@@ -22,7 +22,6 @@ class CifarProblemNew(TorchNetProblem):
         print('==> Preparing data..')
         train_data, val_data, train_sampler, val_sampler = get_train_val_set(data_dir=self.data_dir,
                                                                              augment=True,
-                                                                             random_seed=0,
                                                                              valid_size=0.2)
         test_data = get_test_set(data_dir=self.data_dir)
 

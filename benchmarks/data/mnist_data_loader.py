@@ -6,14 +6,12 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 
 def get_train_val_set(data_dir,
-                      random_seed,
                       valid_size=0.2,
                       shuffle=True):
     """
     Params
     ------
     - data_dir: path directory to the dataset.
-    - random_seed: fix seed for reproducibility.
     - valid_size: percentage split of the training set used for
       the validation set. Should be a float in the range [0, 1].
     - shuffle: whether to shuffle the train/validation indices.
@@ -55,7 +53,6 @@ def get_train_val_set(data_dir,
     split = int(np.floor(valid_size * num_train))
 
     if shuffle:
-        np.random.seed(random_seed)
         np.random.shuffle(indices)
 
     train_idx, val_idx = indices[split:], indices[:split]
