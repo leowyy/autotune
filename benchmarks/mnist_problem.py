@@ -1,32 +1,21 @@
 from __future__ import division
-import os
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 
-from ..core.problem_def import Problem
+from torch_net_problem import TorchNetProblem
 from ..core.params import *
-from ..util.progress_bar import progress_bar
 from data.mnist_data_loader import get_train_val_set, get_test_set
 from ml_models.logistic_regression import LogisticRegression
 
 
-class MnistProblem(Problem):
+class MnistProblem(TorchNetProblem):
+
     def __init__(self, data_dir, output_dir):
-        self.data_dir = data_dir
-        self.output_dir = output_dir
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        self.initialise_data()
-        self.domain = self.initialise_domain()
-
-        self.use_cuda = torch.cuda.is_available()
-        print("Using GPUs? : {}".format(self.use_cuda))
-
+        super(MnistProblem, self).__init__(data_dir, output_dir)
         self.hps = None
 
     def initialise_data(self):
+        # 48k train, 12k val, 10k test
         print('==> Preparing data..')
         train_data, val_data, train_sampler, val_sampler = get_train_val_set(data_dir=self.data_dir,
                                                                              random_seed=0,
@@ -40,14 +29,40 @@ class MnistProblem(Problem):
         self.train_data = train_data
         self.train_sampler = train_sampler
 
-    def eval_arm(self, arm):
-        print(arm)
-        n_resources = arm['n_resources']
+    def construct_model(self, arm):
+        arm['filename'] = arm['dir'] + "/model.pth"
 
-        # Tunable hyperparameters
+        # Construct model and optimizer based on hyperparameters
         base_lr = arm['learning_rate']
         momentum = arm['momentum']
         weight_decay = arm['weight_decay']
+
+        input_size = 784
+        num_classes = 10
+        model = LogisticRegression(input_size, num_classes)
+        if self.use_cuda:
+            model.cuda()
+            model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
+            torch.backends.cudnn.benchmark = True
+
+        optimizer = torch.optim.SGD(model.parameters(), lr=base_lr, momentum=momentum, weight_decay=weight_decay)
+
+        self.save_checkpoint(arm['filename'], 0, model, optimizer, 1, 1)
+        return arm['filename']
+
+    def eval_arm(self, arm, n_resources):
+        print("\nLoading arm with parameters.....")
+
+        arm['n_resources'] = arm['n_resources'] + n_resources
+        print(arm)
+
+        # Load model and optimiser from file to resume training
+        checkpoint = torch.load(arm['filename'])
+        start_epoch = checkpoint['epoch']
+        model = checkpoint['model']
+        optimizer = checkpoint['optimizer']
+
+        # Rest of the tunable hyperparameters
         batch_size = arm['batch_size']
 
         # Initialise train_loader based on batch size
@@ -60,80 +75,22 @@ class MnistProblem(Problem):
         batches_per_epoch = len(train_loader)
         max_epochs = int(n_batches / batches_per_epoch) + 1
 
-        input_size = 784
-        num_classes = 10
-        model = LogisticRegression(input_size, num_classes)
-        if self.use_cuda:
-            model.cuda()
-            model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
-            torch.backends.cudnn.benchmark = True
-
         criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr=base_lr, momentum=momentum, weight_decay=weight_decay)
 
-        # Training
-        def train(loader, epoch, max_batches, disp_interval=10):
-            print('\nEpoch: %d' % epoch)
-            model.train()
-            train_loss = 0
-            correct = 0
-            total = 0
+        for epoch in range(start_epoch, start_epoch+max_epochs):
+            # Train the net for one epoch
+            self.train(train_loader, model, optimizer, criterion, epoch, min(n_batches, batches_per_epoch))
 
-            for batch_idx, (inputs, targets) in enumerate(loader, start=1):
-                if batch_idx >= max_batches:
-                    break
-
-                if self.use_cuda:
-                    inputs, targets = inputs.cuda(), targets.cuda()
-                optimizer.zero_grad()
-                inputs, targets = Variable(inputs), Variable(targets)
-                outputs = model(inputs)
-                loss = criterion(outputs, targets)
-                loss.backward()
-                optimizer.step()
-
-                train_loss += loss.data[0]
-                _, predicted = torch.max(outputs.data, 1)
-                total += targets.size(0)
-                correct += predicted.eq(targets.data).cpu().sum()
-
-                if batch_idx % disp_interval == 0 or batch_idx == len(loader):
-                    progress_bar(batch_idx, len(loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                             % (train_loss / batch_idx, 100. * correct / total, correct, total))
-            return train_loss
-
-        def test(loader, disp_interval=100):
-            model.eval()
-            test_loss = 0
-            correct = 0
-            total = 0
-            for batch_idx, (inputs, targets) in enumerate(loader, start=1):
-                if self.use_cuda:
-                    inputs, targets = inputs.cuda(), targets.cuda()
-                inputs, targets = Variable(inputs, volatile=True), Variable(targets)
-                outputs = model(inputs)
-                loss = criterion(outputs, targets)
-
-                test_loss += loss.data[0]
-                _, predicted = torch.max(outputs.data, 1)
-                total += targets.size(0)
-                correct += predicted.eq(targets.data).cpu().sum()
-
-                if batch_idx % disp_interval == 0 or batch_idx == len(loader):
-                    progress_bar(batch_idx, len(loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                            % (test_loss / batch_idx, 100. * correct / total, correct, total))
-
-            return correct / total
-
-        # Train net for max_epochs
-        for epoch in range(max_epochs):
-            train(train_loader, epoch, min(n_batches, batches_per_epoch))
-            n_batches = n_batches - batches_per_epoch  # Decrement n_batches remaining
+            # Decrement n_batches remaining
+            n_batches = n_batches - batches_per_epoch
 
         # Evaluate trained net on val and test set
-        val_acc = test(self.val_loader)
-        test_acc = test(self.test_loader)
-        return 1 - val_acc, 1 - test_acc
+        val_error = self.test(self.val_loader, model, criterion)
+        test_error = self.test(self.test_loader, model, criterion)
+
+        self.save_checkpoint(arm['filename'], epoch, model, optimizer, val_error, test_error)
+
+        return val_error, test_error
 
     def initialise_domain(self):
         params = {

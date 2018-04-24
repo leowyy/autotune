@@ -78,7 +78,6 @@ class TorchNetProblem(Problem):
         return 1 - correct / total
 
     def save_checkpoint(self, filename, epoch, model, optimizer, val_error, test_error):
-        print("Saving file...")
         torch.save({
             'epoch': epoch,
             'model': model,
