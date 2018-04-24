@@ -8,7 +8,7 @@ from ..core.RandomOptimiser import RandomOptimiser
 # from ..benchmarks.cifar_problem_2 import CifarProblem2
 from ..benchmarks.cifar_problem_new import CifarProblemNew
 
-parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
+parser = argparse.ArgumentParser(description='PyTorch Training')
 parser.add_argument('-i', '--input_dir', type=str, help='input dir')
 parser.add_argument('-o', '--output_dir', type=str, help='output dir')
 parser.add_argument('-res', '--n_resources', default=3, type=int, help='n_resources')

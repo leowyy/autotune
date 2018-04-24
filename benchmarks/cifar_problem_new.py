@@ -79,7 +79,7 @@ class CifarProblemNew(TorchNetProblem):
         n_batches = int(n_resources * 10000 / batch_size)  # each unit of resource = 10,000 examples
         batches_per_epoch = len(train_loader)
         max_epochs = int(n_batches / batches_per_epoch) + 1
-        
+
         if lr_step > max_epochs:
             step_size = max_epochs
         else:
@@ -101,7 +101,7 @@ class CifarProblemNew(TorchNetProblem):
         val_error = self.test(self.val_loader, model, criterion)
         test_error = self.test(self.test_loader, model, criterion)
 
-        self.save_checkpoint(arm['filename'], epoch, model, optimizer, val_error, test_error)
+        self.save_checkpoint(arm['filename'], start_epoch+max_epochs, model, optimizer, val_error, test_error)
 
         return val_error, test_error
 
