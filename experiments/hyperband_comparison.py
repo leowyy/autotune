@@ -22,7 +22,9 @@ problem.print_domain()
 # Define maximum units of resource assigned to each optimisation iteration
 n_resources = args.n_resources
 
-# # Run hyperband
+print("hello there")
+
+# Run hyperband
 hyperband_opt = HyperbandOptimiser()
 hyperband_opt.run_optimization(problem, max_iter=n_resources, verbosity=True)
 
