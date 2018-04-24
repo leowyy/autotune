@@ -4,21 +4,20 @@ import torch.nn as nn
 
 from torch_net_problem import TorchNetProblem
 from ..core.params import *
-from data.cifar_data_loader import get_train_val_set, get_test_set
-from ml_models.cudaconvnet2 import CudaConvNet2
+from data.mnist_data_loader import get_train_val_set, get_test_set
+from ml_models.logistic_regression import LogisticRegression
 
 
-class CifarProblemNew(TorchNetProblem):
+class MnistProblemNew(TorchNetProblem):
 
     def __init__(self, data_dir, output_dir):
-        super(CifarProblemNew, self).__init__(data_dir, output_dir)
+        super(MnistProblemNew, self).__init__(data_dir, output_dir)
         self.hps = None
 
     def initialise_data(self):
-        # 40k train, 10k val, 10k test
+        # 48k train, 12k val, 10k test
         print('==> Preparing data..')
         train_data, val_data, train_sampler, val_sampler = get_train_val_set(data_dir=self.data_dir,
-                                                                             augment=True,
                                                                              random_seed=0,
                                                                              valid_size=0.2)
         test_data = get_test_set(data_dir=self.data_dir)
@@ -35,21 +34,20 @@ class CifarProblemNew(TorchNetProblem):
 
         # Construct model and optimizer based on hyperparameters
         base_lr = arm['learning_rate']
-        n_units_1 = arm['n_units_1']
-        n_units_2 = arm['n_units_2']
-        n_units_3 = arm['n_units_3']
-        weight_decay = arm['weight_decay']
         momentum = arm['momentum']
+        weight_decay = arm['weight_decay']
 
-        model = CudaConvNet2(n_units_1, n_units_2, n_units_3)
+        input_size = 784
+        num_classes = 10
+        model = LogisticRegression(input_size, num_classes)
         if self.use_cuda:
             model.cuda()
             model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))
             torch.backends.cudnn.benchmark = True
 
         optimizer = torch.optim.SGD(model.parameters(), lr=base_lr, momentum=momentum, weight_decay=weight_decay)
-        self.save_checkpoint(arm['filename'], 0, model, optimizer, 1, 1)
 
+        self.save_checkpoint(arm['filename'], 0, model, optimizer, 1, 1)
         return arm['filename']
 
     def eval_arm(self, arm, n_resources):
@@ -65,10 +63,7 @@ class CifarProblemNew(TorchNetProblem):
         optimizer = checkpoint['optimizer']
 
         # Rest of the tunable hyperparameters
-        base_lr = arm['learning_rate']
         batch_size = arm['batch_size']
-        lr_step = arm['lr_step']
-        gamma = arm['gamma']
 
         # Initialise train_loader based on batch size
         train_loader = torch.utils.data.DataLoader(self.train_data, batch_size=batch_size,
@@ -79,14 +74,10 @@ class CifarProblemNew(TorchNetProblem):
         n_batches = int(n_resources * 10000 / batch_size)  # each unit of resource = 10,000 examples
         batches_per_epoch = len(train_loader)
         max_epochs = int(n_batches / batches_per_epoch) + 1
-        step_size = min(max_epochs, int(max_epochs / lr_step))
 
         criterion = nn.CrossEntropyLoss()
 
         for epoch in range(start_epoch, start_epoch+max_epochs):
-            # Adjust learning rate by decay schedule
-            self.adjust_learning_rate(optimizer, epoch, base_lr, gamma, step_size)
-
             # Train the net for one epoch
             self.train(train_loader, model, optimizer, criterion, epoch, min(n_batches, batches_per_epoch))
 
@@ -104,13 +95,8 @@ class CifarProblemNew(TorchNetProblem):
     def initialise_domain(self):
         params = {
             'learning_rate': Param('learning_rate', -6, 0, distrib='uniform', scale='log', logbase=10),
-            'n_units_1': Param('n_units_1', 4, 8, distrib='uniform', scale='log', logbase=2, interval=1),
-            'n_units_2': Param('n_units_2', 4, 8, distrib='uniform', scale='log', logbase=2, interval=1),
-            'n_units_3': Param('n_units_3', 4, 8, distrib='uniform', scale='log', logbase=2, interval=1),
-            'batch_size': Param('batch_size', 32, 512, distrib='uniform', scale='linear', interval=1),
-            'lr_step': Param('lr_step', 1, 5, distrib='uniform', init_val=1, scale='linear', interval=1),
-            'gamma': Param('gamma', -3, -1, distrib='uniform', init_val=0.1, scale='log', logbase=10),
-            'weight_decay': Param('weight_decay', -6, -1, init_val=0.004, distrib='uniform', scale='log', logbase=10),
-            'momentum': Param('momentum', 0.3, 0.999, init_val=0.9, distrib='uniform', scale='linear'),
+            'weight_decay': Param('weight_decay', -6, -1, distrib='uniform', scale='log', logbase=10),
+            'momentum': Param('momentum', 0.3, 0.999, distrib='uniform', scale='linear'),
+            'batch_size': Param('batch_size', 20, 2000, distrib='uniform', scale='linear', interval=1),
         }
         return params
