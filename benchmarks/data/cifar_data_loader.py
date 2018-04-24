@@ -85,6 +85,8 @@ def get_train_val_set(data_dir,
     train_sampler = SubsetRandomSampler(train_idx)
     val_sampler = SubsetRandomSampler(val_idx)
 
+    print("no random seed!!!")
+
     return train_data, val_data, train_sampler, val_sampler
 
 
