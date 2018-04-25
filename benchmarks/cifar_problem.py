@@ -8,10 +8,10 @@ from data.cifar_data_loader import get_train_val_set, get_test_set
 from ml_models.cudaconvnet2 import CudaConvNet2
 
 
-class CifarProblemNew(TorchNetProblem):
+class CifarProblem(TorchNetProblem):
 
     def __init__(self, data_dir, output_dir):
-        super(CifarProblemNew, self).__init__(data_dir, output_dir)
+        super(CifarProblem, self).__init__(data_dir, output_dir)
 
         # Set this to choose a subset of tunable hyperparams
         # self.hps = None

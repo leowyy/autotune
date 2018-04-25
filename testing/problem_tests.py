@@ -1,14 +1,13 @@
 import argparse
 
 # from ..benchmarks.mnist_problem import MnistProblem
-# from ..benchmarks.cifar_problem_1 import CifarProblem1
-# from ..benchmarks.cifar_problem_2 import CifarProblem2
-from ..benchmarks.cifar_problem_new import CifarProblemNew
+# from ..benchmarks.cifar_problem import CifarProblem
+from ..benchmarks.svhn_problem import SvhnProblem
 
 
 class ProblemTest(object):
     def __init__(self, data_dir, output_dir):
-        self.problem = CifarProblemNew(data_dir, output_dir)
+        self.problem = SvhnProblem(data_dir, output_dir)
         self.problem.print_domain()
 
     def generate_arms(self, n_arms):
