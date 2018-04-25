@@ -24,7 +24,7 @@ class TorchNetProblem(Problem):
         self.use_cuda = torch.cuda.is_available()
         print("Using GPUs? : {}".format(self.use_cuda))
 
-    def train(self, loader, model, optimizer, criterion, epoch, max_batches, disp_interval=10):
+    def train(self, loader, model, optimizer, criterion, epoch, max_batches, disp_interval=500):
         print('\nEpoch: %d' % epoch)
         model.train()
         train_loss = 0
