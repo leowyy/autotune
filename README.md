@@ -13,9 +13,9 @@ Defining a problem instance
 def initialise_domain(self):
     params = {
         'learning_rate': Param('learning_rate', -6, 0, distrib='uniform', scale='log', logbase=10),
-        'weight_decay': Param('weight_decay', -6, -1, distrib='uniform', scale='log', logbase=10),
-        'momentum': Param('momentum', 0.3, 0.9, distrib='uniform', scale='linear'),
-        'batch_size': Param('batch_size', 20, 2000, distrib='uniform', scale='linear', interval=1),
+        'weight_decay':  Param('weight_decay', -6, -1, distrib='uniform', scale='log', logbase=10),
+        'momentum':      Param('momentum', 0.3, 0.9, distrib='uniform', scale='linear'),
+        'batch_size':    Param('batch_size', 20, 2000, distrib='uniform', scale='linear', interval=1),
     }
     return params
 ```
