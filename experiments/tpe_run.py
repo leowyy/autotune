@@ -25,7 +25,7 @@ n_resources = args.n_resources
 
 # Run random
 random_opt = RandomOptimiser()
-random_opt.run_optimization(problem, n_resources, max_iter=10, verbosity=True)
+random_opt.run_optimization(problem, n_resources, max_iter=18, verbosity=True)
 
 # Constrain random optimisation to the same time budget
 time_budget = random_opt.checkpoints[-1]
@@ -33,7 +33,7 @@ print("Time budget = {}s".format(time_budget))
 
 # Run tpe
 tpe_opt = TpeOptimiser()
-tpe_opt.run_optimization(problem, n_resources, max_time=time_budget, verbosity=True)
+tpe_opt.run_optimization(problem, n_resources, max_iter=25, verbosity=True)
 
 
 filename = args.output_dir + 'results.pkl'
