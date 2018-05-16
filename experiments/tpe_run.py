@@ -32,10 +32,15 @@ n_resources = args.n_resources
 # print("Time budget = {}s".format(time_budget))
 
 # Run tpe
-tpe_opt = TpeOptimiser()
-tpe_opt.run_optimization(problem, n_resources, max_iter=25, verbosity=True)
+tpe_opt1 = TpeOptimiser()
+tpe_opt1.run_optimization(problem, n_resources, max_iter=25, verbosity=True)
 
+tpe_opt2 = TpeOptimiser()
+tpe_opt2.run_optimization(problem, n_resources, max_iter=25, verbosity=True)
+
+tpe_opt3 = TpeOptimiser()
+tpe_opt3.run_optimization(problem, n_resources, max_iter=25, verbosity=True)
 
 filename = args.output_dir + 'results.pkl'
 with open(filename, 'wb') as f:
-    pickle.dump([tpe_opt], f)
+    pickle.dump([tpe_opt1, tpe_opt2, tpe_opt3], f)
