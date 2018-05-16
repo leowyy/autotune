@@ -38,9 +38,9 @@ class CifarProblem(TorchNetProblem):
 
         # Construct model and optimizer based on hyperparameters
         base_lr = arm['learning_rate']
-        n_units_1 = arm['n_units_1']
-        n_units_2 = arm['n_units_2']
-        n_units_3 = arm['n_units_3']
+        n_units_1 = int(arm['n_units_1'])
+        n_units_2 = int(arm['n_units_2'])
+        n_units_3 = int(arm['n_units_3'])
         weight_decay = arm['weight_decay']
         momentum = arm['momentum']
 
@@ -69,8 +69,8 @@ class CifarProblem(TorchNetProblem):
 
         # Rest of the tunable hyperparameters
         base_lr = arm['learning_rate']
-        batch_size = arm['batch_size']
-        lr_step = arm['lr_step']
+        batch_size = int(arm['batch_size'])
+        lr_step = int(arm['lr_step'])
         gamma = arm['gamma']
 
         # Initialise train_loader based on batch size
