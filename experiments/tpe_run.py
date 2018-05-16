@@ -23,19 +23,19 @@ problem.print_domain()
 # Define maximum units of resource assigned to each optimisation iteration
 n_resources = args.n_resources
 
-# Run random
-random_opt = RandomOptimiser()
-random_opt.run_optimization(problem, n_resources, max_iter=18, verbosity=True)
-
-# Constrain random optimisation to the same time budget
-time_budget = random_opt.checkpoints[-1]
-print("Time budget = {}s".format(time_budget))
+# # Run random
+# random_opt = RandomOptimiser()
+# random_opt.run_optimization(problem, n_resources, max_iter=18, verbosity=True)
+#
+# # Constrain random optimisation to the same time budget
+# time_budget = random_opt.checkpoints[-1]
+# print("Time budget = {}s".format(time_budget))
 
 # Run tpe
 tpe_opt = TpeOptimiser()
-tpe_opt.run_optimization(problem, n_resources, max_iter=25, verbosity=True)
+tpe_opt.run_optimization(problem, n_resources, max_iter=20, verbosity=True)
 
 
 filename = args.output_dir + 'results.pkl'
 with open(filename, 'wb') as f:
-    pickle.dump([random_opt, tpe_opt], f)
+    pickle.dump([tpe_opt], f)
