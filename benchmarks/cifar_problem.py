@@ -1,4 +1,5 @@
 from __future__ import division
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -109,14 +110,14 @@ class CifarProblem(TorchNetProblem):
 
     def initialise_domain(self):
         params = {
-            'learning_rate': Param('learning_rate', -6, 0, distrib='uniform', scale='log', logbase=10),
-            'n_units_1': Param('n_units_1', 4, 8, distrib='uniform', scale='log', logbase=2, interval=1),
-            'n_units_2': Param('n_units_2', 4, 8, distrib='uniform', scale='log', logbase=2, interval=1),
-            'n_units_3': Param('n_units_3', 4, 8, distrib='uniform', scale='log', logbase=2, interval=1),
+            'learning_rate': Param('learning_rate', np.log(10**-6), np.log(10**0), distrib='uniform', scale='log'),
+            'n_units_1': Param('n_units_1', np.log(2**4), np.log(2**8), distrib='uniform', scale='log', interval=1),
+            'n_units_2': Param('n_units_2', np.log(2**4), np.log(2**8), distrib='uniform', scale='log', interval=1),
+            'n_units_3': Param('n_units_3', np.log(2**4), np.log(2**8), distrib='uniform', scale='log', interval=1),
             'batch_size': Param('batch_size', 32, 512, distrib='uniform', scale='linear', interval=1),
             'lr_step': Param('lr_step', 1, 5, distrib='uniform', init_val=1, scale='linear', interval=1),
-            'gamma': Param('gamma', -3, -1, distrib='uniform', init_val=0.1, scale='log', logbase=10),
-            'weight_decay': Param('weight_decay', -6, -1, init_val=0.004, distrib='uniform', scale='log', logbase=10),
+            'gamma': Param('gamma', np.log(10**-3), np.log(10**-1), distrib='uniform', init_val=0.1, scale='log'),
+            'weight_decay': Param('weight_decay', np.log(10**-6), np.log(10**-1), init_val=0.004, distrib='uniform', scale='log'),
             'momentum': Param('momentum', 0.3, 0.999, init_val=0.9, distrib='uniform', scale='linear'),
         }
         return params

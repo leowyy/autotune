@@ -1,4 +1,5 @@
 from __future__ import division
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -62,7 +63,7 @@ class MnistProblem(TorchNetProblem):
         optimizer = checkpoint['optimizer']
 
         # Rest of the tunable hyperparameters
-        batch_size = arm['batch_size']
+        batch_size = int(arm['batch_size'])
 
         # Initialise train_loader based on batch size
         train_loader = torch.utils.data.DataLoader(self.train_data, batch_size=batch_size,
@@ -93,8 +94,8 @@ class MnistProblem(TorchNetProblem):
 
     def initialise_domain(self):
         params = {
-            'learning_rate': Param('learning_rate', -6, 0, distrib='uniform', scale='log', logbase=10),
-            'weight_decay': Param('weight_decay', -6, -1, distrib='uniform', scale='log', logbase=10),
+            'learning_rate': Param('learning_rate', np.log(10**-6), np.log(10**0), distrib='uniform', scale='log'),
+            'weight_decay': Param('weight_decay', np.log(10**-6), np.log(10**-1), distrib='uniform', scale='log'),
             'momentum': Param('momentum', 0.3, 0.999, distrib='uniform', scale='linear'),
             'batch_size': Param('batch_size', 20, 2000, distrib='uniform', scale='linear', interval=1),
         }

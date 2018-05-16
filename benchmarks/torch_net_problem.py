@@ -95,6 +95,10 @@ class TorchNetProblem(Problem):
 
     def generate_arms(self, n, hps=None):
         arms = super(TorchNetProblem, self).generate_arms(n, hps)
+        arms = self.construct_arms(arms)
+        return arms
+
+    def construct_arms(self, arms):
         os.chdir(self.output_dir)
 
         subdirs = next(os.walk('.'))[1]
@@ -103,8 +107,8 @@ class TorchNetProblem(Problem):
         else:
             start_count = len(subdirs)
 
-        for i in range(n):
-            dirname = "arm" + str(start_count+i)
+        for i in range(len(arms)):
+            dirname = "arm" + str(start_count + i)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
             arms[i]['n_resources'] = 0
