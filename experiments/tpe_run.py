@@ -3,8 +3,8 @@ import argparse
 
 from ..core.TpeOptimiser import TpeOptimiser
 from ..core.RandomOptimiser import RandomOptimiser
-from ..benchmarks.mnist_problem import MnistProblem
-# from ..benchmarks.cifar_problem import CifarProblem
+# from ..benchmarks.mnist_problem import MnistProblem
+from ..benchmarks.cifar_problem import CifarProblem
 
 parser = argparse.ArgumentParser(description='PyTorch Training')
 parser.add_argument('-i', '--input_dir', type=str, help='input dir')
@@ -17,7 +17,7 @@ print("Output directory: {}".format(args.output_dir))
 print("# resources: {}".format(args.n_resources))
 
 # Define problem instance
-problem = MnistProblem(args.input_dir, args.output_dir)
+problem = CifarProblem(args.input_dir, args.output_dir)
 problem.print_domain()
 
 # Define maximum units of resource assigned to each optimisation iteration
@@ -25,7 +25,7 @@ n_resources = args.n_resources
 
 # Run random
 random_opt = RandomOptimiser()
-random_opt.run_optimization(problem, n_resources, max_iter=3, verbosity=True)
+random_opt.run_optimization(problem, n_resources, max_iter=10, verbosity=True)
 
 # Constrain random optimisation to the same time budget
 time_budget = random_opt.checkpoints[-1]
