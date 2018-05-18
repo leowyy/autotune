@@ -1,6 +1,6 @@
 AutoTune
 =========
-How can we optimize the hyperparameters of a machine learning model efficiently?
+How can we optimize the hyperparameters of a machine learning model automatically and efficiently?
 
 Tuning a conv net on CIFAR10
 -----
@@ -38,6 +38,7 @@ f_val = problem.eval_arm(params[0], 1)  # Evaluates the set of hyperparameters
 
 References
 -----
- - L. Li *et al* (2016), Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
+ - Li *et al* (2016), Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
+ - Bergstra *et al* (2011), Algorithms for Hyper-Parameter Optimization
 
 ___Stay tuned for more updates...___
