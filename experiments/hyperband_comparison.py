@@ -3,8 +3,8 @@ import argparse
 
 from ..core.HyperbandOptimiser import HyperbandOptimiser
 from ..core.RandomOptimiser import RandomOptimiser
-# from ..benchmarks.cifar_problem import CifarProblem
-from ..benchmarks.svhn_problem import SvhnProblem
+from ..benchmarks.cifar_problem import CifarProblem
+# from ..benchmarks.svhn_problem import SvhnProblem
 
 parser = argparse.ArgumentParser(description='PyTorch Training')
 parser.add_argument('-i', '--input_dir', type=str, help='input dir')
@@ -17,7 +17,7 @@ print("Output directory: {}".format(args.output_dir))
 print("# resources: {}".format(args.n_resources))
 
 # Define problem instance
-problem = SvhnProblem(args.input_dir, args.output_dir)
+problem = CifarProblem(args.input_dir, args.output_dir)
 problem.print_domain()
 
 # Define maximum units of resource assigned to each optimisation iteration
@@ -28,7 +28,8 @@ hyperband_opt = HyperbandOptimiser()
 hyperband_opt.run_optimization(problem, max_iter=n_resources, verbosity=True)
 
 # Constrain random optimisation to the same time budget
-time_budget = hyperband_opt.checkpoints[-1]
+# time_budget = hyperband_opt.checkpoints[-1]
+time_budget = 7000
 print("Time budget = {}s".format(time_budget))
 
 random_opt = RandomOptimiser()
