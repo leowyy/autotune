@@ -1,6 +1,7 @@
 import time
 from hyperopt_source import fmin, tpe, hp, Trials, STATUS_OK
 import numpy as np
+from functools import partial
 from RandomOptimiser import RandomOptimiser
 
 
@@ -46,7 +47,7 @@ class TpeOptimiser(RandomOptimiser):
         # Run optimiser
         best = fmin(objective_fn,
                     space,
-                    algo=tpe.suggest,
+                    algo=partial(tpe.suggest, n_startup_jobs=10),
                     max_evals=self.max_iter,
                     max_time=self.max_time,
                     trials=trials,

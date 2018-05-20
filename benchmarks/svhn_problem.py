@@ -1,5 +1,5 @@
-import numpy as np
 from __future__ import division
+import numpy as np
 import torch
 
 from cifar_problem import CifarProblem
