@@ -55,6 +55,6 @@ tpe_opt.run_optimization(problem, n_resources, max_iter=30, verbosity=True)
 # tpe_opt5.run_optimization(problem, n_resources, max_iter=30, verbosity=True)
 
 filename = args.output_dir + 'results.pkl'
-with open(filename, 'wb') as f: 
+with open(filename, 'wb') as f:
     # pickle.dump([tpe_opt, tpe_opt2, tpe_opt3, tpe_opt4, tpe_opt5], f)
     pickle.dump([tpe_opt], f)

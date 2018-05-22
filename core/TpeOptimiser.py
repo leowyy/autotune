@@ -68,6 +68,15 @@ class TpeOptimiser(RandomOptimiser):
         self._compute_results()
 
     def initialise_hyperopt_objective(self, problem, n_resources, params):
+        # params is a dict: name -> value
+        # instantiate default parameters if any are required
+        if problem.hps is not None:
+            for p in problem.domain.keys():
+                if p not in problem.hps:
+                    val = problem.domain[p].init_val
+                    assert val is not None, "No default value is set for param {}".format(hp)
+                    params[p] = val
+
         # create model file
         arms = problem.construct_arms([params])
         # run model
@@ -94,5 +103,7 @@ class TpeOptimiser(RandomOptimiser):
 
         space = {}
         for p in problem.domain.keys():
-            space[p] = hyperopt_param_converter(problem.domain[p])
+            if problem.hps is None or p in problem.hps:
+                space[p] = hyperopt_param_converter(problem.domain[p])
+        print(space)
         return space
