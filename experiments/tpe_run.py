@@ -22,39 +22,25 @@ print("# resources: {}".format(args.n_resources))
 # Define problem instance
 problem = CifarProblem(args.input_dir, args.output_dir)
 problem.print_domain()
+print(problem.hps)
 
 # Define maximum units of resource assigned to each optimisation iteration
 n_resources = args.n_resources
 
-# # Run hyperband
-# hyperband_opt = HyperbandOptimiser()
-# hyperband_opt.run_optimization(problem, max_iter=n_resources, verbosity=True)
-#
-# # Run random
-# random_opt = RandomOptimiser()
-# random_opt.run_optimization(problem, n_resources, max_iter=30, verbosity=True)
-#
-# # Constrain random optimisation to the same time budget
-# time_budget = random_opt.checkpoints[-1]
-# print("Time budget = {}s".format(time_budget))
+# Run hyperband
+hyperband_opt = HyperbandOptimiser()
+hyperband_opt.run_optimization(problem, max_iter=n_resources, verbosity=True)
+
+# Run random
+random_opt = RandomOptimiser()
+random_opt.run_optimization(problem, n_resources, max_time=7500, verbosity=True)
 
 # Run tpe
 tpe_opt = TpeOptimiser()
-tpe_opt.run_optimization(problem, n_resources, max_iter=30, verbosity=True)
-
-# tpe_opt2 = TpeOptimiser()
-# tpe_opt2.run_optimization(problem, n_resources, max_iter=30, verbosity=True)
-#
-# tpe_opt3 = TpeOptimiser()
-# tpe_opt3.run_optimization(problem, n_resources, max_iter=30, verbosity=True)
-#
-# tpe_opt4 = TpeOptimiser()
-# tpe_opt4.run_optimization(problem, n_resources, max_iter=30, verbosity=True)
-#
-# tpe_opt5 = TpeOptimiser()
-# tpe_opt5.run_optimization(problem, n_resources, max_iter=30, verbosity=True)
+tpe_opt.run_optimization(problem, n_resources, max_time=7500, verbosity=True)
 
 filename = args.output_dir + 'results.pkl'
 with open(filename, 'wb') as f:
     # pickle.dump([tpe_opt, tpe_opt2, tpe_opt3, tpe_opt4, tpe_opt5], f)
-    pickle.dump([tpe_opt], f)
+    # pickle.dump([tpe_opt], f)
+    pickle.dump([hyperband_opt, random_opt, tpe_opt], f)
