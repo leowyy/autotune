@@ -106,6 +106,7 @@ class CifarProblem(TorchNetProblem):
 
         self.save_checkpoint(arm['filename'], start_epoch+max_epochs, model, optimizer, val_error, test_error)
 
+        print("Val error = {:.4f}, test error = {:.4f}".format(val_error, test_error))
         return val_error, test_error
 
     def initialise_domain(self):
