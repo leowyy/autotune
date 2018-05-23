@@ -2,20 +2,20 @@ from __future__ import division
 import torch
 
 from cifar_problem import CifarProblem
-from data.svhn_data_loader import get_train_val_set, get_test_set
+from data.mrbi_data_loader import get_train_val_set, get_test_set
 
 
-class SvhnProblem(CifarProblem):
+class MrbiProblem(CifarProblem):
 
     def __init__(self, data_dir, output_dir):
-        super(SvhnProblem, self).__init__(data_dir, output_dir)
+        super(MrbiProblem, self).__init__(data_dir, output_dir)
 
         # Set this to choose a subset of tunable hyperparams
         self.hps = None
         # self.hps = ['learning_rate', 'n_units_1', 'n_units_2', 'n_units_3', 'batch_size']
 
     def initialise_data(self):
-        # 40k train, 10k val, 10k test
+        # 9.6k train, 2.4k val, 50k test
         print('==> Preparing data..')
         train_data, val_data, train_sampler, val_sampler = get_train_val_set(data_dir=self.data_dir,
                                                                              valid_size=0.2)
