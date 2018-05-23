@@ -44,7 +44,7 @@ class CifarProblem(TorchNetProblem):
         weight_decay = arm['weight_decay']
         momentum = arm['momentum']
 
-        model = CudaConvNet2(n_units_1, n_units_2, n_units_3)
+        model = CudaConvNet2(3, n_units_1, n_units_2, n_units_3)  # n_channels = 3
         if self.use_cuda:
             model.cuda()
             model = torch.nn.DataParallel(model, device_ids=range(torch.cuda.device_count()))

@@ -163,7 +163,7 @@ def get_test_set(data_dir):
     # define transform
     transform = transforms.Compose([
         transforms.ToTensor(),
-        #transforms.Normalize((0.1307,), (0.3081,)),
+        transforms.Normalize((0.5406,), (0.2318,)),
     ])
 
     test_data = MRBI(

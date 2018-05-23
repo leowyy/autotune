@@ -3,10 +3,10 @@ import torch.nn.functional as F
 
 
 class CudaConvNet2(nn.Module):
-    def __init__(self, n_units_1, n_units_2, n_units_3):
+    def __init__(self, n_channels, n_units_1, n_units_2, n_units_3):
         super(CudaConvNet2, self).__init__()
 
-        self.conv1 = nn.Conv2d(3, n_units_1, 5, 1, 2)  # n_input, n_output, ks, stride, padding
+        self.conv1 = nn.Conv2d(n_channels, n_units_1, 5, 1, 2)  # n_channels, n_output, ks, stride, padding
         self.conv2 = nn.Conv2d(n_units_1, n_units_2, 5, 1, 2)
         self.conv3 = nn.Conv2d(n_units_2, n_units_3, 5, 1, 2)
 
