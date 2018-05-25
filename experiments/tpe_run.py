@@ -29,19 +29,20 @@ print(problem.hps)
 n_resources = args.n_resources
 
 # Run hyperband
-hyperband_opt = HyperbandOptimiser()
-hyperband_opt.run_optimization(problem, max_iter=n_resources, verbosity=True)
+# hyperband_opt = HyperbandOptimiser()
+# hyperband_opt.run_optimization(problem, max_iter=n_resources, verbosity=True)
 
 # Run random
 random_opt = RandomOptimiser()
-random_opt.run_optimization(problem, n_resources, max_time=7500, verbosity=True)
+time = 3600 * 3
+random_opt.run_optimization(problem, n_resources, max_time=time, verbosity=True)
 
 # Run tpe
-tpe_opt = TpeOptimiser()
-tpe_opt.run_optimization(problem, n_resources, max_time=7500, verbosity=True)
+# tpe_opt = TpeOptimiser()
+# tpe_opt.run_optimization(problem, n_resources, max_time=7500, verbosity=True)
 
 filename = args.output_dir + 'results.pkl'
 with open(filename, 'wb') as f:
     # pickle.dump([tpe_opt, tpe_opt2, tpe_opt3, tpe_opt4, tpe_opt5], f)
-    # pickle.dump([random_opt], f)
-    pickle.dump([hyperband_opt, random_opt, tpe_opt], f)
+    pickle.dump([random_opt], f)
+    # pickle.dump([hyperband_opt, random_opt, tpe_opt], f)
