@@ -34,8 +34,9 @@ n_resources = args.n_resources
 
 # Run random
 random_opt = RandomOptimiser()
-time = 3600 * 3
-random_opt.run_optimization(problem, n_resources, max_time=time, verbosity=True)
+#time = 3600 * 3
+#random_opt.run_optimization(problem, n_resources, max_time=time, verbosity=True)
+random_opt.run_optimization(problem, n_resources, max_iter=57, verbosity=True)
 
 # Run tpe
 # tpe_opt = TpeOptimiser()
