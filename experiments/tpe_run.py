@@ -4,10 +4,10 @@ import argparse
 from ..core.HyperbandOptimiser import HyperbandOptimiser
 from ..core.TpeOptimiser import TpeOptimiser
 from ..core.RandomOptimiser import RandomOptimiser
-from ..benchmarks.mnist_problem import MnistProblem
+# from ..benchmarks.mnist_problem import MnistProblem
 # from ..benchmarks.cifar_problem import CifarProblem
 # from ..benchmarks.svhn_problem import SvhnProblem
-# from ..benchmarks.mrbi_problem import MrbiProblem
+from ..benchmarks.mrbi_problem import MrbiProblem
 
 
 parser = argparse.ArgumentParser(description='PyTorch Training')
@@ -21,7 +21,7 @@ print("Output directory: {}".format(args.output_dir))
 print("# resources: {}".format(args.n_resources))
 
 # Define problem instance
-problem = MnistProblem(args.input_dir, args.output_dir)
+problem = MrbiProblem(args.input_dir, args.output_dir)
 problem.print_domain()
 print(problem.hps)
 
@@ -36,7 +36,7 @@ n_resources = args.n_resources
 random_opt = RandomOptimiser()
 #time = 3600 * 3
 #random_opt.run_optimization(problem, n_resources, max_time=time, verbosity=True)
-random_opt.run_optimization(problem, n_resources, max_iter=98, verbosity=True)
+random_opt.run_optimization(problem, n_resources, max_iter=48, verbosity=True)
 
 # Run tpe
 # tpe_opt = TpeOptimiser()
