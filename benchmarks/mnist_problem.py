@@ -14,6 +14,7 @@ class MnistProblem(TorchNetProblem):
     def __init__(self, data_dir, output_dir):
         super(MnistProblem, self).__init__(data_dir, output_dir)
         self.hps = None
+        self.name = "MNIST"
 
     def initialise_data(self):
         # 48k train, 12k val, 10k test

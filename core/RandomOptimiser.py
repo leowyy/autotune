@@ -4,10 +4,10 @@ from ..util.best_value import best_value
 
 
 class RandomOptimiser(object):
-    def __init__(self, arms_init=[], val_loss_init=[], Y_init=[]):
-        self.arms = arms_init
-        self.val_loss = val_loss_init
-        self.Y = Y_init
+    def __init__(self):
+        self.arms = []
+        self.val_loss = []
+        self.Y = []
         self.name = "Random"
 
     def run_optimization(self, problem, n_resources, max_iter=None, max_time=np.inf, verbosity=False):

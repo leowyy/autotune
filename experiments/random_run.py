@@ -2,6 +2,7 @@ import pickle
 import argparse
 
 from ..core.RandomOptimiser import RandomOptimiser
+from ..core.SigOptimiser import SigOptimiser
 from ..benchmarks.mnist_problem import MnistProblem
 # from ..benchmarks.cifar_problem import CifarProblem
 # from ..benchmarks.svhn_problem import SvhnProblem
@@ -24,8 +25,14 @@ problem.print_domain()
 n_resources = args.n_resources
 
 random_opt = RandomOptimiser()
-random_opt.run_optimization(problem, n_resources, max_iter=64, verbosity=True)
+random_opt.run_optimization(problem, n_resources, max_iter=2, verbosity=True)
+
+sig_opt = SigOptimiser()
+sig_opt.run_optimization(problem, n_resources, max_iter=5, verbosity=True)
 
 filename = args.output_dir + 'results.pkl'
 with open(filename, 'wb') as f:
-    pickle.dump([random_opt], f)
+    pickle.dump([random_opt, sig_opt], f)
+
+print(sig_opt.arm_opt)
+print(sig_opt.fx_opt)

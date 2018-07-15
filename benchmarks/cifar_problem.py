@@ -17,6 +17,7 @@ class CifarProblem(TorchNetProblem):
         # Set this to choose a subset of tunable hyperparams
         # self.hps = None
         self.hps = ['learning_rate', 'n_units_1', 'n_units_2', 'n_units_3', 'batch_size']
+        self.name = "CIFAR"
 
     def initialise_data(self):
         # 40k train, 10k val, 10k test

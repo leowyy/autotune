@@ -14,6 +14,7 @@ class MrbiProblem(CifarProblem):
         # Set this to choose a subset of tunable hyperparams
         # self.hps = None
         self.hps = ['learning_rate', 'n_units_1', 'n_units_2', 'n_units_3', 'batch_size']
+        self.name = "MRBI"
 
     def initialise_data(self):
         # 9.6k train, 2.4k val, 50k test
