@@ -22,7 +22,7 @@ problem.print_domain()
 n_resources = args.n_resources
 
 sig_opt = SigOptimiser()
-sig_opt.run_optimization(problem, n_resources, max_iter=5, verbosity=True)
+sig_opt.run_optimization(problem, n_resources, max_iter=30, verbosity=True)
 
 filename = args.output_dir + 'results.pkl'
 with open(filename, 'wb') as f:
