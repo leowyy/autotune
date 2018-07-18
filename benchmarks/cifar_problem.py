@@ -64,7 +64,13 @@ class CifarProblem(TorchNetProblem):
     def eval_arm(self, arm, n_resources):
         print("\nLoading arm with parameters.....")
 
+        # Cap total resource at 81 artificially for comparison sake
+        max_resource = 81
+        if arm['n_resources'] + n_resources > max_resource:
+            n_resources = max_resource - arm['n_resources']
+
         arm['n_resources'] = arm['n_resources'] + n_resources
+
         print(arm)
 
         # Load model and optimiser from file to resume training
