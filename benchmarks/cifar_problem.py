@@ -37,6 +37,11 @@ class CifarProblem(TorchNetProblem):
     def construct_model(self, arm):
         arm['filename'] = arm['dir'] + "/model.pth"
 
+        # Initialise trackers
+        arm['epoch'] = []
+        arm['val_error'] = []
+        arm['test_error'] = []
+
         # Construct model and optimizer based on hyperparameters
         base_lr = arm['learning_rate']
         n_units_1 = int(arm['n_units_1'])
@@ -101,9 +106,13 @@ class CifarProblem(TorchNetProblem):
             # Decrement n_batches remaining
             n_batches = n_batches - batches_per_epoch
 
-        # Evaluate trained net on val and test set
-        val_error = self.test(self.val_loader, model, criterion)
-        test_error = self.test(self.test_loader, model, criterion)
+            # Evaluate trained net on val and test set
+            val_error = self.test(self.val_loader, model, criterion)
+            test_error = self.test(self.test_loader, model, criterion)
+
+            arm['epoch'].append(epoch)
+            arm['val_error'].append(val_error)
+            arm['test_error'].append(test_error)
 
         self.save_checkpoint(arm['filename'], start_epoch+max_epochs, model, optimizer, val_error, test_error)
 
