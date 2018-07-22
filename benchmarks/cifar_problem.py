@@ -64,10 +64,10 @@ class CifarProblem(TorchNetProblem):
     def eval_arm(self, arm, n_resources):
         print("\nLoading arm with parameters.....")
 
-        # Cap total resource at 81 artificially for comparison sake
-        max_resource = 81
-        if arm['n_resources'] + n_resources > max_resource:
-            n_resources = max_resource - arm['n_resources']
+        # # Cap total resource at 81 artificially for comparison sake
+        # max_resource = 81
+        # if arm['n_resources'] + n_resources > max_resource:
+        #     n_resources = max_resource - arm['n_resources']
 
         arm['n_resources'] = arm['n_resources'] + n_resources
 
@@ -112,13 +112,13 @@ class CifarProblem(TorchNetProblem):
             # Decrement n_batches remaining
             n_batches = n_batches - batches_per_epoch
 
-            # Evaluate trained net on val and test set
-            val_error = self.test(self.val_loader, model, criterion)
-            test_error = self.test(self.test_loader, model, criterion)
+        # Evaluate trained net on val and test set
+        val_error = self.test(self.val_loader, model, criterion)
+        test_error = self.test(self.test_loader, model, criterion)
 
-            arm['epoch'].append(epoch)
-            arm['val_error'].append(val_error)
-            arm['test_error'].append(test_error)
+        arm['epoch'].append(epoch)
+        arm['val_error'].append(val_error)
+        arm['test_error'].append(test_error)
 
         self.save_checkpoint(arm['filename'], start_epoch+max_epochs, model, optimizer, val_error, test_error)
 
